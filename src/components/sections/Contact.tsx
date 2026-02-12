@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { useInView } from 'react-intersection-observer'
+import emailjs from '@emailjs/browser'
 
 interface FormData {
   name: string
@@ -8,9 +9,14 @@ interface FormData {
   message: string
 }
 
+const SERVICE_ID = 'service_w47x4ao'
+const TEMPLATE_ID = 'template_19wvuu4'
+const PUBLIC_KEY = 'bIsOF88_Lfmox7SnA'
+
 export default function Contact() {
   const [sectionRef, sectionInView] = useInView({ triggerOnce: true, threshold: 0.1 })
   const [form, setForm] = useState<FormData>({ name: '', email: '', message: '' })
+  const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle')
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
@@ -18,12 +24,24 @@ export default function Contact() {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }))
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    alert(
-      `Message received, partner!\n\nName: ${form.name}\nEmail: ${form.email}\nMessage: ${form.message}`,
-    )
-    setForm({ name: '', email: '', message: '' })
+    setStatus('sending')
+
+    try {
+      await emailjs.send(SERVICE_ID, TEMPLATE_ID, {
+        name: form.name,
+        email: form.email,
+        message: form.message,
+      }, PUBLIC_KEY)
+
+      setStatus('success')
+      setForm({ name: '', email: '', message: '' })
+      setTimeout(() => setStatus('idle'), 3000)
+    } catch {
+      setStatus('error')
+      setTimeout(() => setStatus('idle'), 3000)
+    }
   }
 
   return (
@@ -32,7 +50,6 @@ export default function Contact() {
       ref={sectionRef}
       className="relative py-24 px-4 bg-cowboy-dark overflow-hidden"
     >
-      {/* Telegram paper texture */}
       <div
         className="absolute inset-0 opacity-[0.03] pointer-events-none"
         style={{
@@ -53,7 +70,6 @@ export default function Contact() {
           Contact Me
         </motion.h2>
 
-        {/* Telegram form */}
         <motion.div
           initial={{ opacity: 0, y: 40 }}
           animate={sectionInView ? { opacity: 1, y: 0 } : {}}
@@ -67,7 +83,6 @@ export default function Contact() {
               boxShadow: 'inset 0 0 20px rgba(0,0,0,0.08), 0 8px 32px rgba(0,0,0,0.3)',
             }}
           >
-            {/* Telegram header */}
             <div className="text-center mb-8">
               <div className="border-b-2 border-t-2 border-cowboy-brown/20 py-2 mb-4">
                 <p className="font-western text-lg text-cowboy-brown/60 tracking-[0.3em] uppercase">
@@ -80,7 +95,7 @@ export default function Contact() {
               {/* Name */}
               <div>
                 <label className="block font-body text-sm text-cowboy-brown/70 mb-1 uppercase tracking-wider">
-                  From (Name)
+                  이름
                 </label>
                 <input
                   type="text"
@@ -88,17 +103,19 @@ export default function Contact() {
                   value={form.name}
                   onChange={handleChange}
                   required
+                  disabled={status === 'sending'}
                   className="w-full px-4 py-3 bg-transparent border-b-2 border-cowboy-brown/30
                     font-body text-cowboy-brown placeholder-cowboy-dust/50
-                    focus:outline-none focus:border-cowboy-orange transition-colors"
-                  placeholder="Your name, partner"
+                    focus:outline-none focus:border-cowboy-orange transition-colors
+                    disabled:opacity-50"
+                  placeholder="이름을 입력하세요"
                 />
               </div>
 
               {/* Email */}
               <div>
                 <label className="block font-body text-sm text-cowboy-brown/70 mb-1 uppercase tracking-wider">
-                  Return Address (Email)
+                  이메일
                 </label>
                 <input
                   type="email"
@@ -106,9 +123,11 @@ export default function Contact() {
                   value={form.email}
                   onChange={handleChange}
                   required
+                  disabled={status === 'sending'}
                   className="w-full px-4 py-3 bg-transparent border-b-2 border-cowboy-brown/30
                     font-body text-cowboy-brown placeholder-cowboy-dust/50
-                    focus:outline-none focus:border-cowboy-orange transition-colors"
+                    focus:outline-none focus:border-cowboy-orange transition-colors
+                    disabled:opacity-50"
                   placeholder="your@email.com"
                 />
               </div>
@@ -116,18 +135,20 @@ export default function Contact() {
               {/* Message */}
               <div>
                 <label className="block font-body text-sm text-cowboy-brown/70 mb-1 uppercase tracking-wider">
-                  Message
+                  메시지
                 </label>
                 <textarea
                   name="message"
                   value={form.message}
                   onChange={handleChange}
                   required
+                  disabled={status === 'sending'}
                   rows={5}
                   className="w-full px-4 py-3 bg-transparent border-2 border-cowboy-brown/20 rounded
                     font-body text-cowboy-brown placeholder-cowboy-dust/50 resize-none
-                    focus:outline-none focus:border-cowboy-orange transition-colors"
-                  placeholder="Write your message here..."
+                    focus:outline-none focus:border-cowboy-orange transition-colors
+                    disabled:opacity-50"
+                  placeholder="메시지를 입력하세요"
                 />
               </div>
 
@@ -135,16 +156,38 @@ export default function Contact() {
               <div className="text-center pt-2">
                 <motion.button
                   type="submit"
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.97 }}
-                  className="font-western text-lg px-10 py-3 border-2 border-cowboy-brown
-                    text-cowboy-brown bg-transparent rounded
-                    hover:bg-cowboy-brown hover:text-cowboy-cream
-                    transition-colors duration-300"
+                  disabled={status === 'sending'}
+                  whileHover={status !== 'sending' ? { scale: 1.03 } : {}}
+                  whileTap={status !== 'sending' ? { scale: 0.97 } : {}}
+                  className={`font-western text-lg px-10 py-3 border-2 rounded transition-colors duration-300 ${
+                    status === 'sending'
+                      ? 'border-cowboy-dust text-cowboy-dust cursor-wait'
+                      : 'border-cowboy-brown text-cowboy-brown bg-transparent hover:bg-cowboy-brown hover:text-cowboy-cream'
+                  }`}
                 >
-                  메일 보내기
+                  {status === 'sending' ? '전송 중...' : '메일 보내기'}
                 </motion.button>
               </div>
+
+              {/* Status messages */}
+              {status === 'success' && (
+                <motion.p
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="text-center font-body text-green-700 text-sm mt-4"
+                >
+                  메일이 성공적으로 전송되었습니다!
+                </motion.p>
+              )}
+              {status === 'error' && (
+                <motion.p
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="text-center font-body text-red-700 text-sm mt-4"
+                >
+                  전송에 실패했습니다. 직접 이메일을 보내주세요.
+                </motion.p>
+              )}
             </form>
 
             {/* Decorative stamp */}
@@ -163,7 +206,6 @@ export default function Contact() {
           transition={{ duration: 0.5, delay: 0.5 }}
           className="flex justify-center gap-6 mt-10"
         >
-          {/* GitHub */}
           <a
             href="https://github.com/limchanhyuck"
             target="_blank"
@@ -176,7 +218,6 @@ export default function Contact() {
             <span className="font-body text-sm">GitHub</span>
           </a>
 
-          {/* Email */}
           <a
             href="mailto:dlacksgur311@gmail.com"
             className="flex items-center gap-2 text-cowboy-dust hover:text-cowboy-orange transition-colors"
