@@ -16,6 +16,20 @@ export const timeline: TimelineEvent[] = [
     type: 'education',
   },
   {
+    date: '2025',
+    title: '정보처리기사 취득',
+    description: '한국산업인력공단 정보처리기사 자격증 취득.',
+    tags: ['국가기술자격'],
+    type: 'certificate',
+  },
+  {
+    date: '2024',
+    title: 'SQLD 취득',
+    description: '한국데이터산업진흥원 SQL 개발자(SQLD) 자격증 취득.',
+    tags: ['SQL', 'Database'],
+    type: 'certificate',
+  },
+  {
     date: '2024',
     title: 'Diet Coach 프로젝트',
     description: '식단 관리 및 코칭 서비스 개발. Spring Boot 기반 백엔드 및 React 프론트엔드 구현.',
