@@ -50,7 +50,7 @@ export default function Contact() {
           className="font-western text-4xl sm:text-5xl text-cowboy-gold text-center mb-12"
           style={{ textShadow: '0 2px 10px rgba(201,162,39,0.3)' }}
         >
-          Send a Telegram
+          Contact Me
         </motion.h2>
 
         {/* Telegram form */}
@@ -71,7 +71,7 @@ export default function Contact() {
             <div className="text-center mb-8">
               <div className="border-b-2 border-t-2 border-cowboy-brown/20 py-2 mb-4">
                 <p className="font-western text-lg text-cowboy-brown/60 tracking-[0.3em] uppercase">
-                  Western Union Telegram
+                  메일 보내기
                 </p>
               </div>
             </div>
@@ -142,7 +142,7 @@ export default function Contact() {
                     hover:bg-cowboy-brown hover:text-cowboy-cream
                     transition-colors duration-300"
                 >
-                  Send Telegram
+                  메일 보내기
                 </motion.button>
               </div>
             </form>
@@ -178,7 +178,7 @@ export default function Contact() {
 
           {/* Email */}
           <a
-            href="mailto:contact@example.com"
+            href="mailto:dlacksgur311@gmail.com"
             className="flex items-center gap-2 text-cowboy-dust hover:text-cowboy-orange transition-colors"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>

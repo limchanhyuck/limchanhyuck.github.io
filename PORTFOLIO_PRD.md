@@ -542,40 +542,42 @@ NOTION_DATABASE_ID=xxxxxxxxxxxxxxxx
 
 ## 9. 체크리스트 (구현 우선순위)
 
-### Phase 1: 기본 구조 (MVP)
-- [ ] Vite + React 프로젝트 초기화
-- [ ] 기본 라우팅 및 섹션 레이아웃
-- [ ] Navbar + Footer
-- [ ] Hero 섹션 (타이핑 애니메이션)
-- [ ] About 섹션
-- [ ] Skills 섹션 (정적)
-- [ ] Projects 섹션 (카드 리스트)
-- [ ] Contact 섹션 (EmailJS 연동)
-- [ ] 반응형 기본 대응
-- [ ] GitHub Pages 배포 파이프라인
+### Phase 1: 기본 구조 (MVP) ✅ 완료 (2025.02.11)
+- [x] Vite + React 프로젝트 초기화
+- [x] 기본 라우팅 및 섹션 레이아웃
+- [x] Navbar + Footer
+- [x] Hero 섹션 (타이핑 애니메이션)
+- [x] About 섹션
+- [x] Skills 섹션 (정적)
+- [x] Projects 섹션 (카드 리스트)
+- [x] Contact 섹션 (UI만 구현, EmailJS 미연동)
+- [x] 반응형 기본 대응
+- [x] GitHub Pages 배포 파이프라인 (`npm run deploy` → gh-pages 브랜치)
 
-### Phase 2: 서부 테마 적용
-- [ ] 컬러 팔레트 및 폰트 적용
-- [ ] 카우보이 테마 UI 컴포넌트 (WantedCard, WoodCard 등)
-- [ ] 커스텀 구분선, 아이콘
-- [ ] 배경 텍스처 및 질감 적용
+### Phase 2: 서부 테마 적용 ✅ 완료 (2025.02.11)
+- [x] 컬러 팔레트 및 폰트 적용 (Rye, Playfair Display, Inter, Fira Code)
+- [x] 카우보이 테마 UI 컴포넌트 (WantedCard, WoodCard, RopeDivider 등)
+- [x] 커스텀 구분선 (밧줄 SVG 구분선)
+- [x] 배경 텍스처 및 질감 적용 (나무, 가죽, 사막 CSS 그래디언트)
 - [ ] 커스텀 커서
 
-### Phase 3: 3D 및 애니메이션
-- [ ] Hero 3D 사막 장면 (Three.js)
-- [ ] 먼지 파티클 효과
-- [ ] 스크롤 애니메이션 (Framer Motion)
-- [ ] 카드 3D tilt 효과
-- [ ] 타임라인 기차 애니메이션
-- [ ] 마이크로 인터랙션
+### Phase 3: 3D 및 애니메이션 ✅ 대부분 완료 (2025.02.11)
+- [x] Hero 3D 사막 장면 (Three.js / React Three Fiber)
+- [x] 먼지 파티클 효과 (Three.js Points + CSS 파티클)
+- [x] 스크롤 애니메이션 (Framer Motion + Intersection Observer)
+- [x] 카드 3D tilt 효과 (Projects 카드)
+- [x] 타임라인 스크롤 애니메이션
+- [ ] 마이크로 인터랙션 (버튼 호버 파티클 burst 등)
 
-### Phase 4: 콘텐츠 & 마무리
-- [ ] Timeline 실제 데이터 입력
+### Phase 4: 콘텐츠 & 마무리 🔲 미완료
+- [ ] Timeline 실제 데이터 입력 (현재 placeholder)
 - [ ] Blog Notion API 연동 (fetch-notion.ts 스크립트 + 빌드 파이프라인)
-- [ ] 프로젝트 상세 내용 보강
-- [ ] SEO 메타데이터
-- [ ] 성능 최적화 (Lighthouse 90+ 목표)
+- [ ] 프로젝트 상세 내용 보강 (longDescription, highlights 실제 내용)
+- [x] SEO 메타데이터 (기본 OG 태그 적용 완료)
+- [ ] 성능 최적화 (Lighthouse 90+ 목표, Three.js 청크 분리 필요)
 - [ ] 사운드 효과 (선택)
+- [ ] Contact EmailJS 연동
+- [ ] 프로필 이미지 추가
 
 ---
 

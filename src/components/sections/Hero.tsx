@@ -139,7 +139,7 @@ export default function Hero() {
               '0 0 20px rgba(212,115,26,0.6), 0 0 60px rgba(212,115,26,0.3), 0 4px 8px rgba(0,0,0,0.5)',
           }}
         >
-          ChanHyeok Lim
+          Lim ChanHyuck
         </motion.h1>
 
         <motion.p
