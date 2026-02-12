@@ -4,20 +4,22 @@ export default {
   theme: {
     extend: {
       colors: {
-        cowboy: {
-          dark: '#1A0F0A',
-          brown: '#2C1B0E',
-          orange: '#D4731A',
-          gold: '#C9A227',
-          cream: '#F5E6C8',
-          dust: '#A89279',
-          red: '#8B2500',
-          navy: '#0D1B2A',
+        dark: {
+          900: '#0B1120',
+          800: '#0F172A',
+          700: '#1E293B',
+          600: '#334155',
         },
+        accent: {
+          DEFAULT: '#38BDF8',
+          light: '#7DD3FC',
+          dark: '#0284C7',
+        },
+        muted: '#94A3B8',
+        light: '#E2E8F0',
       },
       fontFamily: {
-        western: ['Rye', 'serif'],
-        heading: ['Playfair Display', 'serif'],
+        heading: ['Inter', 'sans-serif'],
         body: ['Inter', 'sans-serif'],
         code: ['Fira Code', 'monospace'],
       },
