@@ -48,18 +48,9 @@ function SkillCard({ skill, index }: { skill: Skill; index: number }) {
       className="bg-cowboy-brown/60 border border-cowboy-dust/30 rounded-lg p-5
         backdrop-blur-sm hover:border-cowboy-orange/50 transition-colors duration-300"
     >
-      <div className="flex items-center gap-3 mb-3">
+      <div className="flex items-center gap-3">
         <IconComp className="text-2xl text-cowboy-orange shrink-0" />
         <span className="font-heading text-cowboy-cream text-lg">{skill.name}</span>
-        <span className="ml-auto font-body text-sm text-cowboy-dust">{skill.level}%</span>
-      </div>
-      <div className="w-full h-2 bg-cowboy-dark/60 rounded-full overflow-hidden">
-        <motion.div
-          initial={{ width: 0 }}
-          animate={cardInView ? { width: `${skill.level}%` } : { width: 0 }}
-          transition={{ duration: 1, delay: index * 0.08 + 0.3, ease: 'easeOut' }}
-          className="h-full rounded-full bg-gradient-to-r from-cowboy-orange to-cowboy-gold"
-        />
       </div>
     </motion.div>
   )
