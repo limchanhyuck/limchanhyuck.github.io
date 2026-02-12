@@ -55,7 +55,7 @@ export default function About() {
               transition={{ duration: 0.5, delay: 0.3 }}
               className="font-western text-3xl sm:text-5xl text-cowboy-red text-center mb-2 tracking-wide"
             >
-              ABOUT THIS COWBOY
+              ABOUT ME
             </motion.h2>
 
             <div className="w-3/4 mx-auto border-t-2 border-b-2 border-cowboy-red/40 py-1 mb-8">
