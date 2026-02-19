@@ -17,7 +17,7 @@ function ProjectCard({ project, index, onSelect }: { project: Project; index: nu
       onClick={() => onSelect(project)}
       className="cursor-pointer group"
     >
-      <div className="bg-dark-700/50 border border-dark-600/30 rounded-xl overflow-hidden hover:border-accent/30 transition-all duration-300 h-full flex flex-col">
+      <div className="panel-card overflow-hidden hover:border-accent/30 transition-all duration-300 h-full flex flex-col hover:shadow-[0_12px_36px_rgba(34,211,238,0.12)] hover:-translate-y-0.5">
         {/* Project Image */}
         {project.image && !imgError ? (
           <div className="relative h-48 overflow-hidden bg-dark-800">
@@ -159,7 +159,7 @@ export default function Projects() {
     <section id="projects" ref={sectionRef} className="py-24 px-4 bg-dark-900">
       <div className="max-w-6xl mx-auto">
         <motion.h2 initial={{ opacity: 0, y: 20 }} animate={sectionInView ? { opacity: 1, y: 0 } : {}} transition={{ duration: 0.5 }}
-          className="font-heading text-3xl sm:text-4xl font-bold text-light text-center mb-4">
+          className="section-heading mb-4">
           Projects
         </motion.h2>
         <p className="font-body text-muted text-center mb-12 text-sm">Click a card for details</p>

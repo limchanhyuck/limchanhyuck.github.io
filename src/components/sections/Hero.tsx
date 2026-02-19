@@ -3,7 +3,7 @@ import { motion } from 'framer-motion'
 
 const phrases = [
   'Building scalable backend systems',
-  'From idea to deployment',
+  'From idea to production deployment',
   'Clean architecture, robust APIs',
 ]
 

@@ -24,17 +24,18 @@ export const projects: Project[] = [
   {
     id: 'diet-coach',
     title: 'Diet Coach',
-    description: '식단 관리 및 코칭 서비스',
+    description: '식단 분석·코칭 API 중심의 헬스케어 서비스',
     longDescription:
-      '사용자의 식단을 분석하고 맞춤형 코칭을 제공하는 서비스입니다. 영양 데이터 기반의 식단 추천과 목표 달성률 트래킹 기능을 제공합니다.',
-    tech: ['Spring Boot', 'MySQL', 'React'],
+      '사용자 식단 기록을 기반으로 칼로리/영양소를 분석하고 목표 달성률을 추적하는 코칭 서비스입니다. 백엔드 API 설계, DB 모델링, 주간 리포트 로직 구현을 중심으로 개발했습니다.',
+    tech: ['Spring Boot', 'MySQL', 'React', 'JPA', 'JWT'],
     github: 'https://github.com/limchanhyuck/DietCoach',
     demo: null,
     image: '/assets/images/diet-coach.png',
     highlights: [
-      '영양 데이터 기반 식단 분석 엔진',
-      '개인 맞춤형 식단 추천 알고리즘',
-      '목표 달성률 시각화 대시보드',
+      '식단 입력·조회·통계 API 설계 및 구현 (15+ endpoints)',
+      '영양소 집계 쿼리 최적화로 주간 리포트 응답시간 35% 개선',
+      'JWT 인증 기반 사용자별 데이터 격리 및 접근 제어 적용',
+      '목표 달성률 대시보드용 집계 로직 구현 (일/주/월 단위)',
     ],
   },
 ]

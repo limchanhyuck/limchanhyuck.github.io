@@ -4,11 +4,10 @@ import { motion, AnimatePresence } from 'framer-motion'
 const navItems = [
   { label: 'Home', href: '#home' },
   { label: 'About', href: '#about' },
-  { label: 'Skills', href: '#skills' },
   { label: 'Projects', href: '#projects' },
+  { label: 'Skills', href: '#skills' },
   { label: 'Timeline', href: '#timeline' },
   { label: 'Awards', href: '#awards' },
-  { label: 'Blog', href: '#blog' },
   { label: 'Contact', href: '#contact' },
 ]
 

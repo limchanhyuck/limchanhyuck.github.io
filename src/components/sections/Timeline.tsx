@@ -29,7 +29,7 @@ function TimelineNode({ event, index }: { event: TimelineEvent; index: number })
         transition={{ duration: 0.5, delay: 0.1 }}
         className={`ml-12 md:ml-0 md:w-[calc(50%-2rem)] ${isLeft ? 'md:pr-8 md:text-right' : 'md:pl-8 md:text-left'}`}
       >
-        <div className="bg-dark-700/50 border border-dark-600/30 rounded-xl p-5">
+        <div className="panel-card p-6">
           <div className={`flex items-center gap-2 mb-2 ${isLeft ? 'md:justify-end' : 'md:justify-start'}`}>
             <span className="font-body text-sm text-muted">{event.date}</span>
             <span className={`text-xs px-2 py-0.5 rounded-full border font-body capitalize ${typeColors[event.type]}`}>{event.type}</span>
@@ -63,7 +63,7 @@ export default function Timeline() {
     <section id="timeline" ref={sectionRef} className="py-24 px-4 bg-dark-800">
       <div className="max-w-4xl mx-auto">
         <motion.h2 initial={{ opacity: 0, y: 20 }} animate={sectionInView ? { opacity: 1, y: 0 } : {}} transition={{ duration: 0.5 }}
-          className="font-heading text-3xl sm:text-4xl font-bold text-light text-center mb-16">
+          className="section-heading mb-16">
           Timeline
         </motion.h2>
         <div className="relative">

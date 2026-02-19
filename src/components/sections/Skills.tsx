@@ -67,7 +67,7 @@ function SkillCard({ skill, index, category }: { skill: Skill; index: number; ca
       initial={{ opacity: 0, y: 20 }}
       animate={cardInView ? { opacity: 1, y: 0 } : {}}
       transition={{ duration: 0.3, delay: index * 0.05 }}
-      className={`${theme.bg} border border-dark-600/30 rounded-lg p-4 ${theme.border} transition-all duration-300 group`}
+      className={`panel-card ${theme.bg} p-4 ${theme.border} transition-all duration-300 group hover:shadow-[0_10px_30px_rgba(167,139,250,0.12)]`}
     >
       <div className="flex items-center gap-3">
         <IconComp className={`text-xl shrink-0 transition-colors ${theme.icon}`} />
@@ -91,7 +91,7 @@ export default function Skills() {
           initial={{ opacity: 0, y: 20 }}
           animate={sectionInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.5 }}
-          className="font-heading text-3xl sm:text-4xl font-bold text-light text-center mb-12"
+          className="section-heading mb-12"
         >
           Skills
         </motion.h2>

@@ -7,7 +7,6 @@ import Skills from './components/sections/Skills'
 import Projects from './components/sections/Projects'
 import Timeline from './components/sections/Timeline'
 import Awards from './components/sections/Awards'
-import Blog from './components/sections/Blog'
 import Contact from './components/sections/Contact'
 
 export default function App() {
@@ -19,11 +18,10 @@ export default function App() {
       <main>
         <Hero />
         <About />
-        <Skills />
         <Projects />
+        <Skills />
         <Timeline />
         <Awards />
-        <Blog />
         <Contact />
       </main>
 

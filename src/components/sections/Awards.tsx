@@ -9,11 +9,6 @@ const awards: Award[] = [
   { title: 'KDN 경진대회 우수상', org: '한전 KDN', date: '2024', image: '/assets/images/한전_KDN_경진대회_우수상.png' },
 ]
 
-const certificates = [
-  { title: '정보처리기사', org: '한국산업인력공단', date: '2025' },
-  { title: 'SQLD', org: '한국데이터산업진흥원', date: '2024' },
-]
-
 export default function Awards() {
   const [sectionRef, sectionInView] = useInView({ triggerOnce: true, threshold: 0.1 })
   const [selectedImage, setSelectedImage] = useState<string | null>(null)
@@ -22,40 +17,24 @@ export default function Awards() {
     <section id="awards" ref={sectionRef} className="py-24 px-4 bg-dark-900">
       <div className="max-w-5xl mx-auto">
         <motion.h2 initial={{ opacity: 0, y: 20 }} animate={sectionInView ? { opacity: 1, y: 0 } : {}} transition={{ duration: 0.5 }}
-          className="font-heading text-3xl sm:text-4xl font-bold text-light text-center mb-16">
-          Achievements
+          className="section-heading mb-16">
+          Awards
         </motion.h2>
 
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={sectionInView ? { opacity: 1, y: 0 } : {}} transition={{ duration: 0.5, delay: 0.1 }} className="mb-16">
-          <h3 className="font-heading text-xl font-semibold text-light/80 mb-6 text-center">Certificates</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl mx-auto">
-            {certificates.map((cert, i) => (
-              <motion.div key={cert.title} initial={{ opacity: 0, y: 15 }} animate={sectionInView ? { opacity: 1, y: 0 } : {}}
-                transition={{ duration: 0.4, delay: 0.2 + i * 0.1 }}
-                className="bg-dark-700/50 border border-dark-600/30 rounded-xl p-6 text-center">
-                <h4 className="font-heading text-lg text-accent font-semibold mb-1">{cert.title}</h4>
-                <p className="text-muted text-sm">{cert.org}</p>
-                <p className="text-muted/60 text-xs mt-1">{cert.date}</p>
-              </motion.div>
-            ))}
-          </div>
-        </motion.div>
-
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={sectionInView ? { opacity: 1, y: 0 } : {}} transition={{ duration: 0.5, delay: 0.3 }}>
-          <h3 className="font-heading text-xl font-semibold text-light/80 mb-6 text-center">Awards</h3>
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={sectionInView ? { opacity: 1, y: 0 } : {}} transition={{ duration: 0.5, delay: 0.2 }}>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-3xl mx-auto">
             {awards.map((award, i) => (
               <motion.div key={award.title} initial={{ opacity: 0, scale: 0.95 }} animate={sectionInView ? { opacity: 1, scale: 1 } : {}}
-                transition={{ duration: 0.4, delay: 0.4 + i * 0.1 }}
-                className="bg-dark-700/50 border border-dark-600/30 rounded-xl overflow-hidden cursor-pointer group"
+                transition={{ duration: 0.4, delay: 0.3 + i * 0.1 }}
+                className="panel-card overflow-hidden cursor-pointer group hover:border-accent/40 transition-all"
                 onClick={() => setSelectedImage(award.image)}>
                 <div className="relative overflow-hidden">
-                  <img src={award.image} alt={award.title} className="w-full h-48 object-contain bg-dark-800 p-2 group-hover:scale-105 transition-transform duration-300" />
+                  <img src={award.image} alt={award.title} className="w-full h-52 object-contain bg-dark-800 p-3 group-hover:scale-105 transition-transform duration-300" />
                   <div className="absolute inset-0 bg-accent/0 group-hover:bg-accent/5 transition-colors duration-300 flex items-center justify-center">
                     <span className="text-light opacity-0 group-hover:opacity-100 transition-opacity text-sm font-body">클릭하여 확대</span>
                   </div>
                 </div>
-                <div className="p-4 text-center">
+                <div className="p-5 text-center">
                   <h4 className="font-heading text-lg text-accent font-semibold mb-1">{award.title}</h4>
                   <p className="text-muted text-sm">{award.org}</p>
                   <p className="text-muted/60 text-xs mt-1">{award.date}</p>
