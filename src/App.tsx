@@ -4,6 +4,8 @@ import ScrollProgress from './components/layout/ScrollProgress'
 import Hero from './components/sections/Hero'
 import About from './components/sections/About'
 import Skills from './components/sections/Skills'
+import BackendHighlights from './components/sections/BackendHighlights'
+import Architecture from './components/sections/Architecture'
 import Projects from './components/sections/Projects'
 import Timeline from './components/sections/Timeline'
 import Awards from './components/sections/Awards'
@@ -18,9 +20,11 @@ export default function App() {
 
       <main>
         <Hero />
-        <About />
-        <Skills />
+        <BackendHighlights />
+        <Architecture />
         <Projects />
+        <Skills />
+        <About />
         <Timeline />
         <Awards />
         <Blog />
