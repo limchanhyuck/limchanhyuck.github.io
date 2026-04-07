@@ -13,3 +13,5 @@
 .duckchi-accordion-item .duckchi-accordion-content{display:none;opacity:0;transform:translateY(-4px);transform-origin:top}
 .duckchi-accordion-item[open] .duckchi-accordion-content{display:block;animation:duckchiAccordionReveal .26s cubic-bezier(.22,.61,.36,1) forwards}
 .duckchi-accordion-summary{padding:.45rem .55rem}
+.duckchi-accordion-body{display:flex;flex-direction:column;gap:.75rem}
+.duckchi-architecture-image{width:100%;border-radius:.75rem;border:1px solid rgba(51,65,85,.45);background:#fff;object-fit:contain}
