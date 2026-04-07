@@ -432,24 +432,11 @@
           </div>
           <div class="card panel">
             <h3>핵심 성과</h3>
-            <div class="metrics">
-              <div class="metric">
-                <strong>13</strong>
-                <span>모임/정산 핵심 API 설계·구현 및 고도화</span>
-              </div>
-              <div class="metric">
-                <strong>19</strong>
-                <span>room/settlement 도메인 테스트 파일 운영</span>
-              </div>
-              <div class="metric">
-                <strong>71</strong>
-                <span>계획서·개발일지·트러블슈팅 누적 문서화</span>
-              </div>
-              <div class="metric">
-                <strong>6</strong>
-                <span>동시성·멱등성·실시간성 중심 설계 개선 항목 정리</span>
-              </div>
-            </div>
+            <ul class="key-list">
+              <li>모임/정산 핵심 API 13개를 설계·구현하며 정산 요청부터 송금 완료까지 핵심 흐름을 구축했습니다.</li>
+              <li>중복 정산 요청 차단, 건별 독립 트랜잭션, 멱등키 적용으로 정산 무결성과 재시도 안정성을 확보했습니다.</li>
+              <li>Partial Success, 외부 금융 오류 복원, fail-safe 분기로 운영 복구성과 사용자 안전성을 함께 높였습니다.</li>
+            </ul>
           </div>
         </div>
       </section>
