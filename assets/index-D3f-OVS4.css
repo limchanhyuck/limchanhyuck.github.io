@@ -7,3 +7,9 @@
 .duckchi-accordion-item[open] .duckchi-accordion-content{animation:duckchiAccordionReveal .28s cubic-bezier(.22,.61,.36,1) forwards}
 .duckchi-accordion-item[open] .duckchi-accordion-icon{transform:rotate(90deg)}
 @keyframes duckchiAccordionReveal{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+
+/* Duckchi accordion spacing fix */
+.duckchi-accordion-item{margin-top:6px}
+.duckchi-accordion-item .duckchi-accordion-content{display:none;opacity:0;transform:translateY(-4px);transform-origin:top}
+.duckchi-accordion-item[open] .duckchi-accordion-content{display:block;animation:duckchiAccordionReveal .26s cubic-bezier(.22,.61,.36,1) forwards}
+.duckchi-accordion-summary{padding:.45rem .55rem}
