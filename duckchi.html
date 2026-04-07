@@ -1,0 +1,711 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Duckchi Pay Service | 구현상세</title>
+    <meta
+      name="description"
+      content="Duckchi Pay Service의 정산 생애주기 설계, 아키텍처, 동시성 제어, 멱등 처리, Partial Success, 실시간 랭킹, fail-safe UX 구현상세 페이지"
+    />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Fira+Code:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #0f172a;
+        --panel: rgba(18, 29, 52, 0.88);
+        --line: rgba(96, 165, 250, 0.18);
+        --text: #e5eefc;
+        --muted: #9fb0ca;
+        --accent: #38bdf8;
+        --accent-soft: rgba(56, 189, 248, 0.12);
+        --success: #34d399;
+        --shadow: 0 24px 80px rgba(2, 8, 23, 0.42);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Inter", sans-serif;
+        background:
+          radial-gradient(circle at top left, rgba(56, 189, 248, 0.12), transparent 28%),
+          radial-gradient(circle at top right, rgba(59, 130, 246, 0.08), transparent 22%),
+          linear-gradient(180deg, #0b1222 0%, var(--bg) 36%, #0a1324 100%);
+        color: var(--text);
+      }
+
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+
+      code,
+      pre {
+        font-family: "Fira Code", monospace;
+      }
+
+      .page {
+        width: min(1180px, calc(100% - 32px));
+        margin: 0 auto;
+      }
+
+      .hero {
+        padding: 72px 0 40px;
+      }
+
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 14px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: rgba(15, 23, 42, 0.5);
+        color: var(--accent);
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+
+      h1,
+      h2,
+      h3,
+      h4 {
+        margin: 0;
+        line-height: 1.15;
+      }
+
+      h1 {
+        margin-top: 18px;
+        font-size: clamp(36px, 6vw, 64px);
+        font-weight: 900;
+        letter-spacing: -0.04em;
+      }
+
+      .hero-copy {
+        margin-top: 18px;
+        max-width: 860px;
+        font-size: 18px;
+        line-height: 1.85;
+        color: var(--muted);
+      }
+
+      .hero-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 28px;
+      }
+
+      .button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        min-height: 48px;
+        padding: 0 18px;
+        border-radius: 14px;
+        border: 1px solid var(--line);
+        background: rgba(15, 23, 42, 0.55);
+        color: var(--text);
+        font-size: 14px;
+        font-weight: 700;
+        transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+      }
+
+      .button:hover {
+        transform: translateY(-1px);
+        border-color: rgba(56, 189, 248, 0.36);
+      }
+
+      .button.primary {
+        background: linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(14, 165, 233, 0.08));
+        color: var(--accent);
+      }
+
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 24px;
+      }
+
+      .chip {
+        padding: 8px 12px;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        background: rgba(8, 15, 30, 0.5);
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 600;
+      }
+
+      .section {
+        padding: 28px 0;
+      }
+
+      .section-title {
+        margin-bottom: 16px;
+        font-size: 14px;
+        font-weight: 800;
+        letter-spacing: 0.12em;
+        color: var(--accent);
+        text-transform: uppercase;
+      }
+
+      .panel {
+        border: 1px solid rgba(148, 163, 184, 0.14);
+        border-radius: 28px;
+        background: var(--panel);
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(14px);
+      }
+
+      .overview {
+        display: grid;
+        grid-template-columns: 1.1fr 0.9fr;
+        gap: 18px;
+      }
+
+      .card {
+        padding: 24px;
+        border: 1px solid rgba(148, 163, 184, 0.12);
+        border-radius: 22px;
+        background: rgba(11, 19, 36, 0.72);
+      }
+
+      .card h3 {
+        font-size: 18px;
+        font-weight: 800;
+      }
+
+      .card p,
+      .card li {
+        color: var(--muted);
+        line-height: 1.85;
+        font-size: 15px;
+      }
+
+      .key-list {
+        margin: 14px 0 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .key-list li {
+        position: relative;
+        padding-left: 18px;
+        margin-top: 10px;
+      }
+
+      .key-list li::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 11px;
+        width: 8px;
+        height: 8px;
+        border-radius: 999px;
+        background: var(--accent);
+      }
+
+      .metrics {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 14px;
+        margin-top: 18px;
+      }
+
+      .metric {
+        padding: 18px;
+        border-radius: 18px;
+        border: 1px solid rgba(148, 163, 184, 0.12);
+        background: rgba(7, 12, 24, 0.5);
+      }
+
+      .metric strong {
+        display: block;
+        font-size: 26px;
+        font-weight: 900;
+        color: var(--accent);
+      }
+
+      .metric span {
+        display: block;
+        margin-top: 8px;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.6;
+      }
+
+      .architecture {
+        padding: 28px;
+      }
+
+      .architecture img {
+        width: 100%;
+        margin-top: 18px;
+        border-radius: 24px;
+        border: 1px solid rgba(148, 163, 184, 0.16);
+        background: #fff;
+      }
+
+      .architecture-caption {
+        margin-top: 14px;
+        color: var(--muted);
+        line-height: 1.8;
+      }
+
+      .detail-grid {
+        display: grid;
+        gap: 18px;
+      }
+
+      .detail-card {
+        padding: 28px;
+      }
+
+      .detail-head {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 18px;
+      }
+
+      .detail-title {
+        font-size: 24px;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+      }
+
+      .code-ref {
+        padding: 8px 12px;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        background: var(--accent-soft);
+        color: var(--accent);
+        font-size: 12px;
+        white-space: nowrap;
+      }
+
+      .detail-meta {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 14px;
+        margin-bottom: 18px;
+      }
+
+      .meta-box {
+        padding: 16px 18px;
+        border-radius: 18px;
+        border: 1px solid rgba(148, 163, 184, 0.12);
+        background: rgba(7, 12, 24, 0.48);
+      }
+
+      .meta-box strong {
+        display: block;
+        margin-bottom: 8px;
+        color: var(--text);
+        font-size: 14px;
+        font-weight: 800;
+      }
+
+      .meta-box p {
+        margin: 0;
+      }
+
+      pre {
+        margin: 18px 0 0;
+        overflow-x: auto;
+        padding: 20px;
+        border-radius: 18px;
+        border: 1px solid rgba(56, 189, 248, 0.16);
+        background: #08111f;
+        color: #d9ecff;
+        line-height: 1.65;
+        font-size: 13px;
+      }
+
+      .note {
+        margin-top: 16px;
+        padding: 18px 20px;
+        border-left: 3px solid var(--success);
+        border-radius: 16px;
+        background: rgba(16, 185, 129, 0.08);
+        color: #c7f7df;
+        line-height: 1.8;
+      }
+
+      .footer {
+        padding: 24px 0 72px;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      @media (max-width: 980px) {
+        .overview,
+        .detail-meta,
+        .metrics {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (max-width: 720px) {
+        .page {
+          width: min(100% - 20px, 1180px);
+        }
+
+        .hero {
+          padding-top: 52px;
+        }
+
+        .architecture,
+        .detail-card,
+        .card {
+          padding: 20px;
+        }
+
+        .detail-title {
+          font-size: 20px;
+        }
+
+        pre {
+          font-size: 12px;
+          padding: 16px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <header class="hero">
+        <div class="eyebrow">Duckchi Pay Service · Implementation Details</div>
+        <h1>정산 생애주기를 끝까지 책임지는 Pay Backend 설계</h1>
+        <p class="hero-copy">
+          Duckchi는 모임 정산을 빠르게 끝내고, 정산 이후에도 소비 데이터를 남겨 분석까지 연결하는 더치페이 서비스입니다.
+          Pay Service에서 모임·정산 백엔드를 담당하며, 정산 요청 생성부터 송금 처리, 권한 검증, 금융 예외 대응까지 정산의
+          전체 생애주기를 설계·구현했습니다.
+        </p>
+        <div class="chips">
+          <span class="chip">Spring Boot</span>
+          <span class="chip">JPA</span>
+          <span class="chip">MySQL</span>
+          <span class="chip">Spring Cloud Gateway</span>
+          <span class="chip">OpenFeign</span>
+          <span class="chip">Redis</span>
+          <span class="chip">Kafka</span>
+          <span class="chip">SSE</span>
+          <span class="chip">React Native</span>
+        </div>
+        <div class="hero-actions">
+          <a class="button primary" href="/#projects">포트폴리오로 돌아가기</a>
+          <a class="button" href="https://github.com/limchanhyuck" target="_blank" rel="noopener noreferrer">GitHub 보기</a>
+        </div>
+      </header>
+
+      <section class="section">
+        <div class="section-title">Overview</div>
+        <div class="overview">
+          <div class="card panel">
+            <h3>내 역할</h3>
+            <ul class="key-list">
+              <li>Pay Service에서 정산 요청 생성, 다건 송금, 수동 완료, 정산 상세/대기 조회 API를 설계·구현</li>
+              <li>권한 검증, 멤버십 검증, 정산 상태 전이, 외부 금융 API 오류 매핑까지 정산 도메인 규칙 정리</li>
+              <li>자동이체 동의 확인과 fail-safe 분기까지 프론트 흐름과 백엔드 에러 계약을 함께 설계</li>
+              <li>구현 계획서 27건, 개발일지 29건, 트러블슈팅 15건 등 총 71건 문서화</li>
+            </ul>
+          </div>
+          <div class="card panel">
+            <h3>핵심 성과</h3>
+            <div class="metrics">
+              <div class="metric">
+                <strong>13</strong>
+                <span>모임/정산 핵심 API 설계·구현 및 고도화</span>
+              </div>
+              <div class="metric">
+                <strong>19</strong>
+                <span>room/settlement 도메인 테스트 파일 운영</span>
+              </div>
+              <div class="metric">
+                <strong>71</strong>
+                <span>계획서·개발일지·트러블슈팅 누적 문서화</span>
+              </div>
+              <div class="metric">
+                <strong>6</strong>
+                <span>동시성·멱등성·실시간성 중심 설계 개선 항목 정리</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-title">Architecture</div>
+        <div class="architecture panel">
+          <h2>서비스 아키텍처</h2>
+          <p class="hero-copy" style="margin-top: 14px; font-size: 16px;">
+            Gateway, Core, Payment, Insight 서버를 분리하고, 결제 요청은 동기 흐름으로, 분석·알림은 Redis/Kafka 기반 비동기
+            흐름으로 분리했습니다. 운영 관점에서는 Jenkins 기반 배포, Nginx 리버스 프록시, RDS 분리, 외부 금융/푸시/OCR
+            연동까지 고려한 구조입니다.
+          </p>
+          <img src="/assets/images/duckchi-architecture.png" alt="Duckchi architecture" />
+          <p class="architecture-caption">
+            실시간 랭킹 반영은 <code>revision 원자 증가 + event cache + SSE ranking.updated push</code> 구조를 사용해 폴링 없이
+            순서를 보장하면서 즉시 갱신되도록 구성했습니다.
+          </p>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-title">Implementation Details</div>
+        <div class="detail-grid">
+          <article class="detail-card panel">
+            <div class="detail-head">
+              <h2 class="detail-title">정산 요청 중복/레이스 방지</h2>
+              <div class="code-ref">SettlementServiceImpl.java · line 73, 107</div>
+            </div>
+            <div class="detail-meta">
+              <div class="meta-box">
+                <strong>문제</strong>
+                <p>동일 결제건에 대해 정산 요청이 동시에 들어오면 중복 settlement가 생성될 수 있었습니다.</p>
+              </div>
+              <div class="meta-box">
+                <strong>해결</strong>
+                <p>입력 정규화, <code>FOR UPDATE</code> 잠금, <code>flush</code> 시점 UNIQUE 위반 감지를 함께 적용했습니다.</p>
+              </div>
+              <div class="meta-box">
+                <strong>성과</strong>
+                <p>서비스 계층과 DB 계층 양쪽에서 레이스를 차단해 정산 무결성을 강화했습니다.</p>
+              </div>
+            </div>
+            <pre><code>List&lt;Long&gt; expenseIds = validateAndNormalizeIds(request.requestedExpenseIds());
+List&lt;Expense&gt; expenses = expenseRepository.findAllByIdInForUpdate(expenseIds);
+
+validateAllExpensesExist(expenseIds, expenses);
+validateRequester(currentUserId, expenses);
+validateRoomMembership(currentUserId, expenses);
+validateExpenseStatus(expenses);
+
+try {
+    settlementRepository.saveAll(settlements);
+    settlementRepository.flush();
+} catch (DataIntegrityViolationException ex) {
+    if (isSettlementUniqueViolation(ex)) {
+        throw new CustomException(ErrorCode.SETTLEMENT_ALREADY_REQUESTED);
+    }
+    throw ex;
+}</code></pre>
+          </article>
+
+          <article class="detail-card panel">
+            <div class="detail-head">
+              <h2 class="detail-title">다건 송금의 Partial Success 설계</h2>
+              <div class="code-ref">SettlementServiceImpl.java · line 131</div>
+            </div>
+            <div class="detail-meta">
+              <div class="meta-box">
+                <strong>문제</strong>
+                <p>배치 송금에서 한 건 실패가 전체 실패로 이어지면 사용자와 운영자 모두 복구 비용이 커졌습니다.</p>
+              </div>
+              <div class="meta-box">
+                <strong>해결</strong>
+                <p>실패 ID를 수집하고, 잔액 부족은 우선 에러로 분리해 성공 건은 유지하도록 설계했습니다.</p>
+              </div>
+              <div class="meta-box">
+                <strong>성과</strong>
+                <p>성공 건은 그대로 확정하고 실패 건만 재처리할 수 있어 운영 복구 속도가 빨라졌습니다.</p>
+              </div>
+            </div>
+            <pre><code>List&lt;Long&gt; failedSettlementIds = new ArrayList&lt;&gt;();
+boolean hasInsufficientBalanceFailure = false;
+
+for (Long settlementId : sortedSettlementIds) {
+    try {
+        settlementTransferExecutor.transferOne(currentUserId, settlementId);
+    } catch (CustomException ex) {
+        failedSettlementIds.add(settlementId);
+        if (ErrorCode.SETTLEMENT_INSUFFICIENT_BALANCE.equals(ex.getErrorCode())) {
+            hasInsufficientBalanceFailure = true;
+        }
+    }
+}
+
+if (!failedSettlementIds.isEmpty()) {
+    if (hasInsufficientBalanceFailure) {
+        throw new CustomException(ErrorCode.SETTLEMENT_INSUFFICIENT_BALANCE, failedSettlementIds);
+    }
+    throw new CustomException(ErrorCode.SETTLEMENT_TRANSFER_PARTIAL, failedSettlementIds);
+}</code></pre>
+          </article>
+
+          <article class="detail-card panel">
+            <div class="detail-head">
+              <h2 class="detail-title">건별 독립 트랜잭션 + 멱등키 송금 실행기</h2>
+              <div class="code-ref">SettlementTransferExecutor.java · line 56</div>
+            </div>
+            <div class="detail-meta">
+              <div class="meta-box">
+                <strong>문제</strong>
+                <p>외부 금융망 호출이 재시도될 때 중복 송금이나 상태 꼬임이 발생할 위험이 있었습니다.</p>
+              </div>
+              <div class="meta-box">
+                <strong>해결</strong>
+                <p><code>REQUIRES_NEW</code>로 건별 트랜잭션을 분리하고, 멱등키와 행 잠금으로 경쟁 상태를 제어했습니다.</p>
+              </div>
+              <div class="meta-box">
+                <strong>성과</strong>
+                <p>배치 중 실패 격리와 재시도 안정성을 동시에 확보했습니다.</p>
+              </div>
+            </div>
+            <pre><code>@Transactional(propagation = Propagation.REQUIRES_NEW)
+public void transferOne(Long currentUserId, Long settlementId) {
+    String financeRequestUniqueNo =
+        settlementTransferIdempotencyService.ensureFinanceRequestUniqueNo(settlementId);
+
+    Settlement settlement = settlementRepository.findByIdForUpdate(settlementId)
+        .orElseThrow(() =&gt; new CustomException(ErrorCode.SETTLEMENT_NOT_FOUND));
+
+    validatePayerAuthorization(currentUserId, settlement);
+    validatePendingStatus(settlement);
+}</code></pre>
+          </article>
+
+          <article class="detail-card panel">
+            <div class="detail-head">
+              <h2 class="detail-title">외부 금융 오류를 도메인 에러로 정교하게 복원</h2>
+              <div class="code-ref">SettlementTransferExecutor.java · line 132, 183</div>
+            </div>
+            <div class="detail-meta">
+              <div class="meta-box">
+                <strong>문제</strong>
+                <p>외부 API 에러 포맷이 불규칙해 프론트와 사용자 입장에서 일관된 해석이 어려웠습니다.</p>
+              </div>
+              <div class="meta-box">
+                <strong>해결</strong>
+                <p><code>H0000</code>, <code>A1014</code> 등 응답코드와 예외 신호를 분석해 잔액 부족과 외부 장애를 분리했습니다.</p>
+              </div>
+              <div class="meta-box">
+                <strong>성과</strong>
+                <p>충전 유도, 재시도, 안내 메시지 분기가 명확해져 UX와 운영 대응 품질이 좋아졌습니다.</p>
+              </div>
+            </div>
+            <pre><code>try {
+    TransferResponse response = financeClient.transfer(transferRequest);
+    validateFinanceResponse(response);
+    return response;
+} catch (Exception ex) {
+    if (hasInsufficientBalanceSignal(ex)) {
+        throw new CustomException(ErrorCode.SETTLEMENT_INSUFFICIENT_BALANCE);
+    }
+    throw new CustomException(ErrorCode.FINANCE_API_ERROR);
+}
+
+private void validateFinanceResponse(TransferResponse response) {
+    if (response == null || response.header() == null) {
+        throw new CustomException(ErrorCode.FINANCE_API_ERROR);
+    }
+    if (FINANCE_INSUFFICIENT_BALANCE_CODE.equals(response.header().getResponseCode())) {
+        throw new CustomException(ErrorCode.SETTLEMENT_INSUFFICIENT_BALANCE);
+    }
+}</code></pre>
+          </article>
+
+          <article class="detail-card panel">
+            <div class="detail-head">
+              <h2 class="detail-title">랭킹 실시간 반영 아키텍처</h2>
+              <div class="code-ref">RoomServiceImpl.java · line 1179</div>
+            </div>
+            <div class="detail-meta">
+              <div class="meta-box">
+                <strong>문제</strong>
+                <p>폴링 기반 랭킹 갱신은 지연과 트래픽 낭비가 있었고, 이벤트 순서 보장도 어려웠습니다.</p>
+              </div>
+              <div class="meta-box">
+                <strong>해결</strong>
+                <p><code>revision</code> 원자 증가 후 이벤트 캐시 저장, SSE로 <code>ranking.updated</code>를 push 했습니다.</p>
+              </div>
+              <div class="meta-box">
+                <strong>성과</strong>
+                <p>순서 보장과 즉시성이 필요한 실시간 랭킹 UX를 안정적으로 제공할 수 있었습니다.</p>
+              </div>
+            </div>
+            <pre><code>RoomRankingRevision revisionEntity = roomRankingRevisionRepository.findByRoomIdForUpdate(roomId)
+    .orElseGet(() =&gt; roomRankingRevisionRepository.save(RoomRankingRevision.initialize(roomId)));
+
+long newRevision = revisionEntity.increaseRevision();
+roomRankingRevisionRepository.save(revisionEntity);
+
+RoomRankingUpdateEventResponse event = new RoomRankingUpdateEventResponse(
+    roomId, LocalDateTime.now(), newRevision, changes, snapshot.top3(), snapshot.items()
+);
+
+roomRankingEventCache.add(roomId, event);
+emitter.send(SseEmitter.event().id(String.valueOf(event.revision())).name("ranking.updated").data(event));</code></pre>
+          </article>
+
+          <article class="detail-card panel">
+            <div class="detail-head">
+              <h2 class="detail-title">프론트 Fail-safe 이체 분기 설계</h2>
+              <div class="code-ref">useSettlementViewModel.ts · line 183 / RoomSettlementTransferScreen.tsx · line 115</div>
+            </div>
+            <div class="detail-meta">
+              <div class="meta-box">
+                <strong>문제</strong>
+                <p>자동이체 동의 조회가 실패했는데도 자동이체로 진행되면 보안상, 동작상 모두 위험했습니다.</p>
+              </div>
+              <div class="meta-box">
+                <strong>해결</strong>
+                <p>조회 실패를 <code>false</code>로 처리하고 비밀번호 인증 경로로 강제 우회시키는 fail-safe 정책을 적용했습니다.</p>
+              </div>
+              <div class="meta-box">
+                <strong>성과</strong>
+                <p>네트워크 실패 시에도 안전한 동작을 기본값으로 보장하는 UX를 만들었습니다.</p>
+              </div>
+            </div>
+            <pre><code>const checkAutoDebitAgreed = useCallback(async (): Promise&lt;boolean&gt; =&gt; {
+  try {
+    return await fetchAutoDebitConsent(roomId);
+  } catch {
+    return false;
+  }
+}, [roomId]);
+
+const isAgreed = await checkAutoDebitAgreed();
+if (isAgreed) {
+  openTransferActionScreen(action);
+  return;
+}
+setPending(action);
+rootNavigation.navigate('PayPasswordInput');</code></pre>
+          </article>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="note panel">
+          이 페이지의 핵심은 단발성 에러를 나열하는 것이 아니라, 동시성 제어, 멱등 처리, 실패 격리, 실시간 이벤트 전달,
+          안전한 폴백처럼 서비스의 운영 안정성을 구조적으로 끌어올린 설계를 보여주는 데 있습니다.
+        </div>
+      </section>
+
+      <footer class="footer">
+        Duckchi Pay Service 상세 페이지 · Lim ChanHyuck Portfolio
+      </footer>
+    </main>
+  </body>
+</html>
