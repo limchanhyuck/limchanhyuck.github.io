@@ -293,16 +293,6 @@
         letter-spacing: -0.02em;
       }
 
-      .code-ref {
-        padding: 8px 12px;
-        border-radius: 999px;
-        border: 1px solid var(--line);
-        background: var(--accent-soft);
-        color: var(--accent);
-        font-size: 12px;
-        white-space: nowrap;
-      }
-
       .detail-meta {
         display: grid;
         grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -464,7 +454,6 @@
           <article class="detail-card panel">
             <div class="detail-head">
               <h2 class="detail-title">정산 요청 중복/레이스 방지</h2>
-              <div class="code-ref">SettlementServiceImpl.java · line 73, 107</div>
             </div>
             <div class="detail-meta">
               <div class="meta-box">
@@ -502,7 +491,6 @@ try {
           <article class="detail-card panel">
             <div class="detail-head">
               <h2 class="detail-title">다건 송금의 Partial Success 설계</h2>
-              <div class="code-ref">SettlementServiceImpl.java · line 131</div>
             </div>
             <div class="detail-meta">
               <div class="meta-box">
@@ -543,7 +531,6 @@ if (!failedSettlementIds.isEmpty()) {
           <article class="detail-card panel">
             <div class="detail-head">
               <h2 class="detail-title">건별 독립 트랜잭션 + 멱등키 송금 실행기</h2>
-              <div class="code-ref">SettlementTransferExecutor.java · line 56</div>
             </div>
             <div class="detail-meta">
               <div class="meta-box">
@@ -575,7 +562,6 @@ public void transferOne(Long currentUserId, Long settlementId) {
           <article class="detail-card panel">
             <div class="detail-head">
               <h2 class="detail-title">외부 금융 오류를 도메인 에러로 정교하게 복원</h2>
-              <div class="code-ref">SettlementTransferExecutor.java · line 132, 183</div>
             </div>
             <div class="detail-meta">
               <div class="meta-box">
@@ -615,7 +601,6 @@ private void validateFinanceResponse(TransferResponse response) {
           <article class="detail-card panel">
             <div class="detail-head">
               <h2 class="detail-title">랭킹 실시간 반영 아키텍처</h2>
-              <div class="code-ref">RoomServiceImpl.java · line 1179</div>
             </div>
             <div class="detail-meta">
               <div class="meta-box">
@@ -648,7 +633,6 @@ emitter.send(SseEmitter.event().id(String.valueOf(event.revision())).name("ranki
           <article class="detail-card panel">
             <div class="detail-head">
               <h2 class="detail-title">프론트 Fail-safe 이체 분기 설계</h2>
-              <div class="code-ref">useSettlementViewModel.ts · line 183 / RoomSettlementTransferScreen.tsx · line 115</div>
             </div>
             <div class="detail-meta">
               <div class="meta-box">
