@@ -6,7 +6,7 @@
     <title>Avofit | 구현 상세</title>
     <meta
       name="description"
-      content="Avofit의 AI 식단 생성, 비동기 처리, 장보기 추천, 3D 대시보드, JWT rotation 구현을 정리한 포트폴리오 상세 페이지"
+      content="Avofit의 AI 식단 생성 보정, 비동기 분할 처리, 장보기 추천, 체중 기록 정합성 구현을 정리한 포트폴리오 상세 페이지"
     />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -348,12 +348,12 @@
     <main class="page">
       <header class="hero">
         <div class="eyebrow">Avofit · Implementation Details</div>
-        <h1>AI 식단 생성 지연과 LLM 불안정을 서비스 로직으로 통제한 다이어트 코치</h1>
+        <h1>AI 식단 생성 지연과 쇼핑 API 노이즈를 서버 규칙으로 보정한 다이어트 코치</h1>
         <p class="hero-copy">
           Avofit은 사용자 TDEE, 목표 칼로리, 선호/알레르기, 월간 예산을 기반으로 30일 식단을 생성하고 장보기 추천까지
           연결하는 다이어트 코치 서비스입니다. 핵심은 AI를 붙인 것이 아니라, 식단 생성 지연은
-          <code>7일 선응답 + 23일 비동기 병렬 처리</code>로, 불안정한 LLM 응답은
-          <code>재시도 + JSON 정제 + 템플릿 fallback</code>으로 흡수했다는 점입니다.
+          <code>7일 선응답 + 23일 비동기 chunk 처리</code>로, 불안정한 LLM 응답은
+          <code>재시도 + JSON 정제 + 템플릿 fallback + 칼로리 보정</code>으로 흡수했다는 점입니다.
         </p>
         <div class="chips">
           <span class="chip">Spring Boot</span>
@@ -362,8 +362,8 @@
           <span class="chip">Vue 3</span>
           <span class="chip">Three.js</span>
           <span class="chip">Chart.js</span>
-          <span class="chip">JWT</span>
           <span class="chip">Gemini</span>
+          <span class="chip">JUnit</span>
         </div>
         <div class="hero-actions">
           <a class="button primary" href="/#projects">포트폴리오로 돌아가기</a>
@@ -384,20 +384,20 @@
           <div class="card panel">
             <h3>내가 맡은 핵심 구현</h3>
             <ul class="key-list">
-              <li>30일 식단 생성 API와 식단 재생성 로직 구현</li>
-              <li>LLM 재시도, JSON 정제, 템플릿 fallback, 칼로리 스케일링 파이프라인 설계</li>
-              <li>예산 기반 장보기 추천, 가격 캐시, AI rerank, budget guard 구현</li>
-              <li>JWT access/refresh 분리, refresh token 해시 저장, rotation 적용</li>
-              <li>Chart.js 추세 시각화와 Three.js 3D 아바타 피드백 흐름 연결</li>
+              <li>30일 식단 생성 API와 7일 선응답 + 23일 비동기 chunk 처리 구현</li>
+              <li>LLM 재시도, JSON 정제, 템플릿 fallback, ±10% 칼로리 스케일링 파이프라인 설계</li>
+              <li>식단 재료를 totalGram·totalCalories·daysCount로 집계해 쇼핑 추천 입력으로 연결</li>
+              <li>검색어 정규화, 상품 스코어링, AI rerank, budget guard 기반 장보기 추천 구현</li>
+              <li>체중 기록 UNIQUE + upsert 흐름과 BMI 기반 5단계 아바타 상태 계산 검증</li>
             </ul>
           </div>
           <div class="card panel">
             <h3>면접에서 설명할 포인트</h3>
             <ul class="key-list">
-              <li>AI 식단 생성 지연을 7일 선응답 + 23일 백그라운드 병렬 처리로 분해한 점</li>
-              <li>LLM 실패를 재시도, JSON 정제, 템플릿 fallback, 칼로리 스케일링으로 흡수한 점</li>
-              <li>장보기 추천을 단순 검색이 아니라 예산 제약 최적화 문제로 설계한 점</li>
-              <li>refresh token rotation과 해시 저장까지 적용해 보안 마감이 되어 있는 점</li>
+              <li>전체 생성 대기 예상 60초대를 첫 응답 약 15초 내외로 줄이는 구조를 선택한 이유</li>
+              <li>AI 결과를 그대로 저장하지 않고 서버 도메인 규칙으로 검증·보정한 점</li>
+              <li>장보기 추천을 단순 검색이 아니라 예산·용량·카테고리 제약 문제로 설계한 점</li>
+              <li>동일 재료 재조회 시 외부 API 1~2초를 60분 TTL 캐시로 10ms 내외 조회로 줄인 점</li>
             </ul>
           </div>
         </div>
@@ -407,16 +407,16 @@
             <span>월간 식단 생성 범위</span>
           </div>
           <div class="metric panel">
-            <strong>7일 선응답</strong>
-            <span>나머지 23일은 백그라운드 병렬 생성</span>
+            <strong>60s → 15s</strong>
+            <span>30일 전체 대기 대비 초기 응답 시간 구조상 추정</span>
           </div>
           <div class="metric panel">
-            <strong>60분</strong>
-            <span>재료별 예상 단가 캐시 TTL</span>
+            <strong>1~2s → 10ms</strong>
+            <span>동일 재료 상품 조회 캐시 적용 시 추정</span>
           </div>
           <div class="metric panel">
-            <strong>Rotation</strong>
-            <span>Refresh token 해시 저장과 재발급 흐름 적용</span>
+            <strong>8 tests</strong>
+            <span>BMI, upsert, 검색어 정규화, 중량 파싱 회귀 검증</span>
           </div>
         </div>
       </section>
@@ -437,7 +437,7 @@
               </div>
               <div class="meta-box">
                 <strong>성과</strong>
-                <p>초기 체감 속도를 확보하면서도 월간 식단 전체를 포기하지 않는 응답 구조를 만들었습니다.</p>
+                <p>30일 전체를 한 번에 기다리는 구조 대비, 전체 생성 대기 예상 60초대를 첫 응답 약 15초 내외로 줄이는 구조를 만들었습니다.</p>
               </div>
             </div>
             <pre><code>generateAndSaveChunk(mealPlan, allDays, basePayload, 0, 7, targetKcalPerDay, mealsPerDay);
@@ -546,7 +546,7 @@ if (currentTotal &lt; targetTotal * 0.9 || currentTotal &gt; targetTotal * 1.1) 
               </div>
               <div class="meta-box">
                 <strong>성과</strong>
-                <p>추천 품질과 예산 적합성을 동시에 챙기면서도, AI 실패 시 규칙 기반 결과로 안전하게 내려오도록 만들었습니다.</p>
+                <p>추천 품질과 예산 적합성을 동시에 챙기면서도, 동일 재료 재조회는 60분 TTL 캐시로 외부 API 1~2초 호출을 10ms 내외 메모리 조회로 줄일 수 있게 했습니다.</p>
               </div>
             </div>
             <pre><code>List&lt;ShoppingProduct&gt; topCandidates =
@@ -570,39 +570,35 @@ reason = guarded.reason();</code></pre>
           </article>
 
           <article class="detail-card panel">
-            <h2 class="detail-title">JWT 인증을 발급에서 끝내지 않고 refresh rotation까지 적용</h2>
+            <h2 class="detail-title">체중 기록 중복을 DB 제약과 upsert 흐름으로 차단</h2>
             <div class="detail-meta">
               <div class="meta-box">
                 <strong>문제</strong>
-                <p>Refresh token을 평문 저장하거나 재사용 가능하게 두면 탈취 시 세션이 길게 악용될 위험이 있었습니다.</p>
+                <p>같은 날짜의 체중 기록이 중복되면 체중 추이, BMI 계산, 3D 아바타 레벨이 서로 다른 기준으로 흔들릴 수 있었습니다.</p>
               </div>
               <div class="meta-box">
                 <strong>해결</strong>
-                <p>Refresh token은 SHA-256 해시만 DB에 저장하고, refresh 요청 시 검증 후 기존 토큰을 revoke한 뒤 새 토큰 쌍을 발급했습니다.</p>
+                <p><code>user_id + record_date</code> UNIQUE 제약을 두고, 서비스에서는 같은 날짜 기록이 있으면 insert 대신 update하는 upsert 흐름으로 처리했습니다.</p>
               </div>
               <div class="meta-box">
                 <strong>성과</strong>
-                <p>토큰 재사용 위험을 줄이고, access/refresh 수명 분리와 함께 인증 보안 설계의 완성도를 높였습니다.</p>
+                <p>날짜별 체중 데이터를 하나로 유지하고, 최신 체중 기반 BMI 계산과 5단계 아바타 상태 계산을 JUnit 테스트로 검증했습니다.</p>
               </div>
             </div>
-            <pre><code>String tokenHash = TokenHasher.sha256(token);
-RefreshToken saved = refreshTokenMapper.findByTokenHash(tokenHash);
+            <pre><code>UNIQUE KEY uk_user_date (user_id, record_date)
 
-if (Boolean.TRUE.equals(saved.getRevoked())) {
-    throw new BusinessException("Refresh token revoked");
+WeightRecord existing =
+    weightRecordMapper.findByUserIdAndDate(userId, request.getRecordDate());
+
+if (existing == null) {
+    weightRecordMapper.insertWeightRecord(record);
+} else {
+    existing.setWeight(request.getWeight());
+    existing.setMemo(request.getMemo());
+    weightRecordMapper.updateWeightRecord(existing);
 }
 
-refreshTokenMapper.revokeById(saved.getId());
-
-String newAccess = jwtTokenProvider.createAccessToken(userId);
-String newRefresh = jwtTokenProvider.createRefreshToken(userId);
-
-refreshTokenMapper.insert(RefreshToken.builder()
-    .userId(userId)
-    .tokenHash(TokenHasher.sha256(newRefresh))
-    .expiresAt(jwtTokenProvider.getExpiry(newRefresh))
-    .revoked(false)
-    .build());</code></pre>
+double bmi = Math.round(bmiValue * 100.0) / 100.0;</code></pre>
           </article>
 
           <article class="detail-card panel">
@@ -629,7 +625,7 @@ refreshTokenMapper.insert(RefreshToken.builder()
         </div>
       </section>
 
-      <footer class="footer">이 페이지의 내용은 <code>diet_coach_PJ</code> 실제 구현 코드를 기준으로 정리했습니다.</footer>
+      <footer class="footer">이 페이지의 구현 내용은 <code>diet_coach_PJ</code> 실제 코드를 기준으로, 성능 수치는 구조 기반 추정치로 정리했습니다.</footer>
     </main>
   </body>
 </html>
