@@ -363,7 +363,6 @@
           <span class="chip">Three.js</span>
           <span class="chip">Chart.js</span>
           <span class="chip">Gemini</span>
-          <span class="chip">JUnit</span>
         </div>
         <div class="hero-actions">
           <a class="button primary" href="/#projects">포트폴리오로 돌아가기</a>
@@ -388,14 +387,14 @@
               <li>LLM 재시도, JSON 정제, 템플릿 fallback, ±10% 칼로리 스케일링 파이프라인 설계</li>
               <li>식단 재료를 totalGram·totalCalories·daysCount로 집계해 쇼핑 추천 입력으로 연결</li>
               <li>검색어 정규화, 상품 스코어링, AI rerank, budget guard 기반 장보기 추천 구현</li>
-              <li>체중 기록 UNIQUE + upsert 흐름과 BMI 기반 5단계 아바타 상태 계산 검증</li>
+              <li>체중 기록 UNIQUE + upsert 흐름으로 날짜별 체중 데이터 중복 차단</li>
             </ul>
           </div>
           <div class="card panel">
             <h3>면접에서 설명할 포인트</h3>
             <ul class="key-list">
               <li>전체 생성 대기 예상 60초대를 첫 응답 약 15초 내외로 줄이는 구조를 선택한 이유</li>
-              <li>AI 결과를 그대로 저장하지 않고 서버 도메인 규칙으로 검증·보정한 점</li>
+              <li>AI 결과를 그대로 저장하지 않고 서버 도메인 규칙으로 보정한 점</li>
               <li>장보기 추천을 단순 검색이 아니라 예산·용량·카테고리 제약 문제로 설계한 점</li>
               <li>동일 재료 재조회 시 외부 API 1~2초를 60분 TTL 캐시로 10ms 내외 조회로 줄인 점</li>
             </ul>
@@ -415,8 +414,8 @@
             <span>동일 재료 상품 조회 캐시 적용 시 추정</span>
           </div>
           <div class="metric panel">
-            <strong>8 tests</strong>
-            <span>BMI, upsert, 검색어 정규화, 중량 파싱 회귀 검증</span>
+            <strong>±10%</strong>
+            <span>목표 칼로리 범위 이탈 시 grams 재계산</span>
           </div>
         </div>
       </section>
@@ -574,7 +573,7 @@ return new BudgetGuardResult(cheapestPerGram, "BUDGET_GUARD");</code></pre>
               </div>
               <div class="meta-box">
                 <strong>성과</strong>
-                <p>날짜별 체중 데이터를 하나로 유지하고, 최신 체중 기반 BMI 계산과 5단계 아바타 상태 계산을 JUnit 테스트로 검증했습니다.</p>
+                <p>날짜별 체중 데이터를 하나로 유지해 체중 추이, BMI 계산, 5단계 아바타 상태 계산이 같은 기준을 바라보도록 정리했습니다.</p>
               </div>
             </div>
             <pre><code>UNIQUE KEY uk_user_date (user_id, record_date)
