@@ -440,57 +440,50 @@
                 <p>30일 전체를 한 번에 기다리는 구조 대비, 전체 생성 대기 예상 60초대를 첫 응답 약 15초 내외로 줄이는 구조를 만들었습니다.</p>
               </div>
             </div>
-            <pre><code>generateAndSaveChunk(mealPlan, allDays, basePayload, 0, 7, targetKcalPerDay, mealsPerDay);
-
-CompletableFuture.runAsync(() -&gt; {
-    try {
-        generateRemainingWeeksParallel(mealPlan, allDays, basePayload, targetKcalPerDay, mealsPerDay);
-    } catch (Exception e) {
-        log.error("[MealPlan] Async generation failed for planId={}", mealPlan.getId(), e);
-    }
-});
+            <pre><code>// 1주차는 동기 생성해서 먼저 응답
+generateAndSaveChunk(mealPlan, allDays, basePayload, 0, 7, targetKcalPerDay, mealsPerDay);
 
 for (int offset = 7; offset &lt; DEFAULT_PLAN_DAYS; offset += AI_CHUNK_DAYS) {
     int currentOffset = offset;
     int limit = Math.min(AI_CHUNK_DAYS, DEFAULT_PLAN_DAYS - currentOffset);
+
+    // 나머지 23일은 7일 단위 chunk로 병렬 생성
     futures.add(CompletableFuture.runAsync(() -&gt;
         generateAndSaveChunk(mealPlan, allDays, basePayload, currentOffset, limit, targetKcal, mealsPerDay)
     ));
-}</code></pre>
+}
+
+CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();</code></pre>
           </article>
 
           <article class="detail-card panel">
-            <h2 class="detail-title">LLM 불안정성을 재시도와 JSON 정제로 흡수</h2>
+            <h2 class="detail-title">식단 재료 집계를 DB에서 처리해 쇼핑 추천 입력으로 연결</h2>
             <div class="detail-meta">
               <div class="meta-box">
                 <strong>문제</strong>
-                <p>LLM 응답은 빈 값이 오거나, 마크다운 코드블록이 섞이거나, JSON 외 텍스트가 붙어 파싱이 깨질 수 있었습니다.</p>
+                <p>30일 식단은 날짜·끼니·재료 단위로 흩어져 있어, 장보기 추천에 필요한 총 재료량을 애플리케이션에서 직접 합산하면 불필요한 데이터 이동이 커집니다.</p>
               </div>
               <div class="meta-box">
                 <strong>해결</strong>
-                <p><code>DietAiClient</code>에서 2회 재시도 후 JSON만 추출하고, 서비스 레이어가 후속 fallback으로 이어받을 수 있게 분리했습니다.</p>
+                <p>MyBatis SQL에서 재료명 기준으로 <code>totalGram</code>, <code>totalCalories</code>, <code>daysCount</code>를 바로 집계했습니다.</p>
               </div>
               <div class="meta-box">
                 <strong>성과</strong>
-                <p>AI 출력 품질이 흔들려도 식단 생성 API 자체는 계속 결과를 반환하는 안정적인 파이프라인이 됐습니다.</p>
+                <p>월간 식단 데이터를 쇼핑 추천 입력 형태로 바로 변환해, 추천 로직이 필요한 재료량과 예산만 다루도록 분리했습니다.</p>
               </div>
             </div>
-            <pre><code>public AiMonthlySkeletonResponse generateMonthlySkeleton(Map&lt;String, Object&gt; payload) {
-    try {
-        return callOnce(payload);
-    } catch (Exception first) {
-        log.warn("[AI] first attempt failed: {}", first.getMessage());
-        try {
-            return callOnce(payload);
-        } catch (Exception second) {
-            throw new RuntimeException("AI_CALL_FAILED", second);
-        }
-    }
-}
-
-String content = candidates.get(0).path("content").path("parts").get(0).path("text").asText();
-String json = extractJsonOnly(content);
-return objectMapper.readValue(json, AiMonthlySkeletonResponse.class);</code></pre>
+            <pre><code>SELECT
+    mi.food_name AS ingredientName,
+    SUM(mi.grams) AS totalGram,
+    SUM(mi.calories) AS totalCalories,
+    COUNT(DISTINCT mi.meal_plan_day_id) AS daysCount
+FROM meal_items mi
+WHERE mi.meal_plan_day_id IN (
+    SELECT id FROM meal_plan_days WHERE meal_plan_id = #{planId}
+)
+GROUP BY mi.food_name
+HAVING SUM(mi.grams) &gt; 0
+ORDER BY totalGram DESC</code></pre>
           </article>
 
           <article class="detail-card panel">
@@ -509,22 +502,14 @@ return objectMapper.readValue(json, AiMonthlySkeletonResponse.class);</code></pr
                 <p>AI가 흔들려도 서비스 결과는 비지니스 규칙 안으로 다시 들어오게 만들어 식단 일관성을 지켰습니다.</p>
               </div>
             </div>
-            <pre><code>AiMonthlySkeletonResponse skeleton = null;
-try {
-    skeleton = dietAiClient.generateMonthlySkeleton(payload);
-} catch (Exception e) {
-    log.warn("[MealPlan] AI failed for chunk offset={}, reason={}", offset, e.getMessage());
-}
-
-if (skeleton != null) {
-    itemsForDay = buildItemsFromAiWithFixedRules(skeleton, i, day.getId(), mealsPerDay, mealTargets);
-} else {
-    itemsForDay = buildItemsFromTemplate(day.getId(), targetKcal, mealsPerDay);
-}
+            <pre><code>itemsForDay = (skeleton != null)
+    ? buildItemsFromAiWithFixedRules(skeleton, i, day.getId(), mealsPerDay, mealTargets)
+    : buildItemsFromTemplate(day.getId(), targetKcal, mealsPerDay);
 
 if (currentTotal &lt; targetTotal * 0.9 || currentTotal &gt; targetTotal * 1.1) {
     double scale = (double) targetTotal / currentTotal;
     scale = Math.max(0.5, Math.min(1.5, scale));
+
     for (MealItem item : result) {
         int newGrams = (int) Math.round(item.getGrams() * scale);
         item.setGrams(newGrams);
@@ -549,24 +534,31 @@ if (currentTotal &lt; targetTotal * 0.9 || currentTotal &gt; targetTotal * 1.1) 
                 <p>추천 품질과 예산 적합성을 동시에 챙기면서도, 동일 재료 재조회는 60분 TTL 캐시로 외부 API 1~2초 호출을 10ms 내외 메모리 조회로 줄일 수 있게 했습니다.</p>
               </div>
             </div>
-            <pre><code>List&lt;ShoppingProduct&gt; topCandidates =
-    productScorer.selectTopN(products, ingredientName, allocatedBudget, totalGram, 10);
-
-if (topCandidates.size() &gt;= 3) {
-    try {
-        ShoppingProduct aiSelected = aiReranker.rerank(ingredientName, allocatedBudget, topCandidates);
-        best = (aiSelected != null) ? aiSelected : topCandidates.get(0);
-        reason = (aiSelected != null) ? "AI_SELECTED" : "AI_FAIL_FALLBACK";
-    } catch (Exception e) {
-        best = topCandidates.get(0);
-        reason = "AI_ERROR_FALLBACK";
-    }
+            <pre><code>if (selected != null &amp;&amp; isWithinBudget(selected, allocatedBudget, totalGram, 1.25)) {
+    return new BudgetGuardResult(selected, reason);
 }
 
-BudgetGuardResult guarded =
-    enforceBudgetFit(ingredientName, allocatedBudget, totalGram, topCandidates, best, reason);
-best = guarded.product();
-reason = guarded.reason();</code></pre>
+List&lt;ShoppingProduct&gt; withinBudget = candidates.stream()
+    .filter(p -&gt; p != null &amp;&amp; p.getPrice() &gt; 0)
+    .filter(p -&gt; isWithinBudget(p, allocatedBudget, totalGram, 1.25))
+    .toList();
+
+ShoppingProduct closest = withinBudget.stream()
+    .sorted(Comparator.comparingDouble(p -&gt; budgetDistance(p, allocatedBudget, totalGram)))
+    .findFirst()
+    .orElse(null);
+
+if (closest != null) {
+    return new BudgetGuardResult(closest, "BUDGET_GUARD");
+}
+
+ShoppingProduct cheapestPerGram = candidates.stream()
+    .filter(p -&gt; p != null &amp;&amp; p.getPrice() &gt; 0)
+    .sorted(Comparator.comparingDouble(p -&gt; pricePerGram(p, totalGram)))
+    .findFirst()
+    .orElse(null);
+
+return new BudgetGuardResult(cheapestPerGram, "BUDGET_GUARD");</code></pre>
           </article>
 
           <article class="detail-card panel">
@@ -602,25 +594,30 @@ double bmi = Math.round(bmiValue * 100.0) / 100.0;</code></pre>
           </article>
 
           <article class="detail-card panel">
-            <h2 class="detail-title">Service Flow</h2>
-            <pre><code>사용자 프로필 입력
-  - TDEE / 목표 칼로리 계산
-  - 선호 식재료 / 알레르기 / 월 예산 설정
+            <h2 class="detail-title">상품명에서 용량을 추출해 가격 비교 기준 확보</h2>
+            <div class="detail-meta">
+              <div class="meta-box">
+                <strong>문제</strong>
+                <p>쇼핑 API 상품명은 <code>500g x 2팩</code>, <code>1.5kg</code>처럼 형식이 제각각이라 단순 가격 비교만으로는 실제 구매 비용을 판단하기 어렵습니다.</p>
+              </div>
+              <div class="meta-box">
+                <strong>해결</strong>
+                <p>상품명에서 kg/g/ml/l/lb/oz와 곱셈 패턴을 파싱해 <code>gramPerUnit</code>을 계산하고, 필요 재료량 대비 예상 구매 수량을 계산했습니다.</p>
+              </div>
+              <div class="meta-box">
+                <strong>성과</strong>
+                <p>가격뿐 아니라 용량까지 고려해 예산 초과 상품과 과대 포장 상품을 걸러낼 수 있는 추천 기준을 만들었습니다.</p>
+              </div>
+            </div>
+            <pre><code>private static final Pattern MULTIPLY_PATTERN =
+    Pattern.compile("(?i)(\\d+(?:[.,]\\d+)?)\\s*(kg|g|ml|l)\\s*[xX*]\\s*(\\d+)");
 
-월간 식단 생성 요청
-  - 첫 7일 동기 생성 후 즉시 응답
-  - 나머지 23일은 비동기 병렬 생성
-  - AI 실패 시 템플릿 fallback + 칼로리 스케일링 적용
+int count = (int) Math.ceil((double) totalGram / product.getGramPerUnit());
+long projectedTotalCost = (long) product.getPrice() * count;
 
-장보기 추천 생성
-  - 재료별 검색어 정규화
-  - 가격 추정 캐시 조회
-  - scorer + AI rerank + budget guard 적용
-
-대시보드 반영
-  - Chart.js 체중 추세 시각화
-  - Three.js 3D 아바타와 코치 메시지로 피드백 제공
-  - 식단 생성 결과를 행동 피드백까지 연결</code></pre>
+if (product.getGramPerUnit() &gt; totalGram * 3) {
+    score -= 80; // 필요량 대비 과대 포장 상품 감점
+}</code></pre>
           </article>
         </div>
       </section>
