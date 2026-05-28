@@ -249,6 +249,48 @@
         line-height: 1.6;
       }
 
+      .showcase-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 18px;
+      }
+
+      .showcase-card {
+        overflow: hidden;
+        border-radius: 24px;
+        border: 1px solid rgba(148, 163, 184, 0.14);
+        background: rgba(9, 17, 28, 0.72);
+      }
+
+      .showcase-card.featured {
+        grid-column: 1 / -1;
+      }
+
+      .showcase-card img {
+        display: block;
+        width: 100%;
+        aspect-ratio: 16 / 9;
+        object-fit: cover;
+      }
+
+      .showcase-caption {
+        padding: 18px 20px 20px;
+      }
+
+      .showcase-caption strong {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 16px;
+        font-weight: 800;
+      }
+
+      .showcase-caption span {
+        display: block;
+        color: var(--muted);
+        font-size: 14px;
+        line-height: 1.7;
+      }
+
       .detail-grid {
         display: grid;
         gap: 18px;
@@ -313,9 +355,14 @@
 
       @media (max-width: 980px) {
         .overview,
+        .showcase-grid,
         .detail-meta,
         .metrics {
           grid-template-columns: 1fr;
+        }
+
+        .showcase-card.featured {
+          grid-column: auto;
         }
       }
 
@@ -417,6 +464,33 @@
             <strong>±10%</strong>
             <span>목표 칼로리 범위 이탈 시 grams 재계산</span>
           </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-title">Product Screens</div>
+        <div class="showcase-grid">
+          <figure class="showcase-card featured panel">
+            <img src="/assets/images/avofit-dashboard.png" alt="Avofit 대시보드 화면" loading="lazy" />
+            <figcaption class="showcase-caption">
+              <strong>대시보드: 식단, 체중, 목표 달성률을 한 화면에 통합</strong>
+              <span>체중 기록, 칼로리 섭취, 주간 변화, 추천 행동이 한 화면에서 연결되어 식단 생성 결과가 사용자 피드백까지 이어지는 흐름을 보여줍니다.</span>
+            </figcaption>
+          </figure>
+          <figure class="showcase-card panel">
+            <img src="/assets/images/avofit-meal-detail.png" alt="Avofit 식단 상세 모달" loading="lazy" />
+            <figcaption class="showcase-caption">
+              <strong>식단 상세: 끼니별 재료와 영양 비율 확인</strong>
+              <span>AI 생성 식단을 탄수화물·단백질·지방 비율과 끼니별 칼로리로 검증해, 서버 보정 로직의 결과가 사용자 화면에 어떻게 드러나는지 보여줍니다.</span>
+            </figcaption>
+          </figure>
+          <figure class="showcase-card panel">
+            <img src="/assets/images/avofit-shopping.png" alt="Avofit 장보기 추천 화면" loading="lazy" />
+            <figcaption class="showcase-caption">
+              <strong>장보기 추천: 예산과 용량을 반영한 후보 선택</strong>
+              <span>식단 재료 집계 결과가 상품 추천, 장바구니 예상 견적, 예산 사용률로 이어져 검색 결과를 비즈니스 제약으로 보정한 흐름을 설명합니다.</span>
+            </figcaption>
+          </figure>
         </div>
       </section>
 
