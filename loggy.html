@@ -479,11 +479,6 @@ notificationPublisher.send(command.getUserId(), response);</code></pre>
             <li>알림을 핵심 도메인 상태 변경과 분리해 저장/전송 책임을 독립시킨 점</li>
             <li>Controller/WebSocket/Service 테스트를 인증 공통 헬퍼 위에 올려 회귀 안정성을 확보한 점</li>
           </ul>
-          <div class="note">
-            근거 파일: `MeetingServiceImpl.java`, `IssueServiceImpl.java`, `BranchServiceImpl.java`,
-            `NotificationServiceImpl.java`, `ChatService.java`, `BaseWebMvcTest.java`, `TestAuth.java`,
-            `git log --author="임찬혁|ImChanHyuck"`
-          </div>
         </div>
       </section>
 
