@@ -418,17 +418,17 @@
             <ul class="key-list">
               <li>30일 식단 생성 API와 7일 선응답 + 23일 비동기 chunk 처리 구현</li>
               <li>LLM 재시도, JSON 정제, 템플릿 fallback, ±10% 칼로리 스케일링 파이프라인 설계</li>
-              <li>식단 재료를 totalGram·totalCalories·daysCount로 집계해 쇼핑 추천 입력으로 연결</li>
-              <li>검색어 정규화, 상품 스코어링, AI rerank, budget guard 기반 장보기 추천 구현</li>
+              <li>30일 단일 LLM 프롬프트 timeout을 7일 선응답 + 23일 async chunk 처리로 분리</li>
+              <li>토마토→토마토 주스 같은 상품 검색 노이즈를 검색어 정규화·카테고리 필터·스코어링/rerank로 보정</li>
               <li>체중 기록 UNIQUE + upsert 흐름으로 날짜별 체중 데이터 중복 차단</li>
             </ul>
           </div>
           <div class="card panel">
             <h3>면접에서 설명할 포인트</h3>
             <ul class="key-list">
-              <li>30일 전체 생성 60초대 흐름을 첫 응답 15초대로 줄이는 구조를 선택한 이유</li>
+              <li>30일 전체 생성 60초 이상 timeout 흐름을 첫 응답 15초대로 줄이는 구조를 선택한 이유</li>
               <li>AI 결과를 그대로 저장하지 않고 서버 도메인 규칙으로 보정한 점</li>
-              <li>장보기 추천을 단순 검색이 아니라 예산·용량·카테고리 제약 문제로 설계한 점</li>
+              <li>장보기 추천을 단순 검색이 아니라 검색 노이즈·예산·용량·카테고리 제약 문제로 설계한 점</li>
               <li>동일 재료 재조회 시 외부 API 1~2초를 60분 TTL 캐시로 10ms 조회로 줄인 점</li>
             </ul>
           </div>
@@ -461,19 +461,19 @@
               <img src="/assets/images/avofit-meal-plan.png" alt="Avofit 한 달 식단 플랜 화면" loading="lazy" />
             </div>
             <div class="flow-content">
-              <h2 class="flow-title">AI 식단 생성 지연을 7일 선응답 구조로 분해</h2>
+              <h2 class="flow-title">30일 단일 프롬프트 타임아웃을 비동기 분할 처리로 해결</h2>
               <div class="flow-points">
                 <div class="flow-point">
                   <strong>문제</strong>
-                  <span>30일 식단을 한 번에 생성하면 사용자가 결과를 보기 전까지 전체 LLM 응답을 기다려야 했습니다.</span>
+                  <span>초기 구현은 30일 식단을 하나의 LLM 프롬프트로 생성해 응답이 60초 이상 지연되며 API timeout이 발생했습니다.</span>
                 </div>
                 <div class="flow-point">
                   <strong>해결</strong>
-                  <span>첫 7일은 동기 생성해 즉시 보여주고, 나머지 23일은 백그라운드에서 chunk 단위로 병렬 생성했습니다.</span>
+                  <span>첫 7일만 동기 생성해 사용자에게 먼저 반환하고, 나머지 23일은 CompletableFuture 기반 async chunk로 백그라운드 생성했습니다.</span>
                 </div>
                 <div class="flow-point">
                   <strong>성과</strong>
-                  <span>30일 전체 생성 60초대 흐름을 초기 응답 15초대로 줄이는 구조를 만들었습니다.</span>
+                  <span>전체 생성 60초 이상/timeout 흐름을 초기 응답 15초대로 줄이고, 남은 23일은 비동기 완료되도록 분리했습니다.</span>
                 </div>
               </div>
               <span class="snippet-label">코드 스니펫</span>
@@ -529,30 +529,37 @@ if (currentTotal &lt; targetTotal * 0.9 || currentTotal &gt; targetTotal * 1.1) 
               <img src="/assets/images/avofit-shopping.png" alt="Avofit 장보기 추천 화면" loading="lazy" />
             </div>
             <div class="flow-content">
-              <h2 class="flow-title">식단 재료를 장보기 추천 입력으로 집계</h2>
+              <h2 class="flow-title">토마토→토마토 주스 오추천을 3단계 필터로 보정</h2>
               <div class="flow-points">
                 <div class="flow-point">
                   <strong>문제</strong>
-                  <span>30일 식단 데이터가 날짜·끼니·재료 단위로 흩어져 있어 쇼핑 추천에 필요한 총량을 바로 쓰기 어려웠습니다.</span>
+                  <span>외부 상품 검색은 키워드 포함 중심이라 토마토를 검색해도 토마토 주스·가공식품처럼 실제 식단 재료와 다른 상품이 추천 후보로 잡혔습니다.</span>
                 </div>
                 <div class="flow-point">
                   <strong>해결</strong>
-                  <span>DB에서 재료명 기준으로 총 gram, 총 calories, 등장 일수를 집계하고 그 결과를 상품 추천과 예산 guard에 연결했습니다.</span>
+                  <span>1차 검색어 정규화, 2차 카테고리·상품명 필터, 3차 Top20 스코어링·Top10 AI rerank·budget guard로 후보를 좁혔습니다.</span>
                 </div>
                 <div class="flow-point">
                   <strong>성과</strong>
-                  <span>동일 재료 상품 재조회는 60분 TTL 캐시로 외부 API 1~2초 호출을 10ms 메모리 조회로 줄였습니다.</span>
+                  <span>Top20 검색 후보를 Top10 후보로 압축한 뒤 최종 상품을 선택해 토마토 주스 같은 노이즈 후보가 대표 상품으로 올라가는 경로를 차단했습니다.</span>
                 </div>
               </div>
               <span class="snippet-label">코드 스니펫</span>
-              <pre><code>SELECT mi.food_name AS ingredientName,
-       SUM(mi.grams) AS totalGram,
-       COUNT(DISTINCT mi.meal_plan_day_id) AS daysCount
-FROM meal_items mi
-WHERE mi.meal_plan_day_id IN (
-    SELECT id FROM meal_plan_days WHERE meal_plan_id = #{planId}
-)
-GROUP BY mi.food_name</code></pre>
+              <pre><code>String normalizedQuery = queryNormalizer.normalize(ingredientName);
+if (!containsAny(normalizedQuery, "식품", "식재료")) {
+    normalizedQuery += " 식품";
+}
+
+String targetCatNo = categoryService.findBestCategory(ingredientName).orElse(null);
+ShoppingClientResult result = shoppingClient.searchProducts(normalizedQuery, 1, 20, targetCatNo);
+
+List&lt;ShoppingProduct&gt; products = filterProducts(result.getProducts());
+List&lt;ShoppingProduct&gt; topCandidates =
+    productScorer.selectTopN(products, ingredientName, allocatedBudget, totalGram, 10);
+
+ShoppingProduct aiSelected = aiReranker.rerank(ingredientName, allocatedBudget, topCandidates);
+BudgetGuardResult guarded =
+    enforceBudgetFit(ingredientName, allocatedBudget, totalGram, topCandidates, aiSelected, "AI_SELECTED");</code></pre>
             </div>
           </article>
 
