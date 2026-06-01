@@ -343,6 +343,42 @@
         font-weight: 800;
       }
 
+      .evidence-layout {
+        display: grid;
+        grid-template-columns: minmax(220px, 360px) minmax(0, 1fr);
+        gap: 18px;
+        align-items: start;
+      }
+
+      .screen-shot {
+        margin: 18px 0 0;
+        overflow: hidden;
+        border-radius: 22px;
+        border: 1px solid rgba(148, 163, 184, 0.16);
+        background: rgba(255, 255, 255, 0.95);
+      }
+
+      .screen-shot img {
+        display: block;
+        width: 100%;
+        max-height: 520px;
+        object-fit: contain;
+        background: #f8fafc;
+      }
+
+      .screen-shot figcaption {
+        padding: 11px 14px 13px;
+        border-top: 1px solid rgba(15, 23, 42, 0.08);
+        color: #334155;
+        font-size: 13px;
+        line-height: 1.55;
+        background: #ffffff;
+      }
+
+      .snippet-panel pre {
+        margin-top: 10px;
+      }
+
       .note {
         margin-top: 16px;
         padding: 18px 20px;
@@ -362,6 +398,7 @@
       @media (max-width: 980px) {
         .overview,
         .detail-meta,
+        .evidence-layout,
         .metrics {
           grid-template-columns: 1fr;
         }
@@ -477,8 +514,14 @@
                 <p>서비스 계층 검증과 DB UNIQUE 3종을 함께 적용해 중복 정산 생성과 중복 금융 요청을 이중 차단했습니다.</p>
               </div>
             </div>
-            <span class="snippet-label">코드 스니펫</span>
-            <pre><code>List&lt;Long&gt; expenseIds = validateAndNormalizeIds(request.requestedExpenseIds());
+            <div class="evidence-layout">
+              <figure class="screen-shot">
+                <img src="/assets/images/duckchi-settlement-form.png" alt="Duckchi 정산 요청 추가 화면" />
+                <figcaption>관련 화면: 정산 제목·금액·참여자를 지정해 같은 결제건 기준으로 정산 요청을 생성하는 흐름</figcaption>
+              </figure>
+              <div class="snippet-panel">
+                <span class="snippet-label">코드 스니펫</span>
+                <pre><code>List&lt;Long&gt; expenseIds = validateAndNormalizeIds(request.requestedExpenseIds());
 List&lt;Expense&gt; expenses = expenseRepository.findAllByIdInForUpdate(expenseIds);
 
 if (settlementRepository.existsByExpenseIdIn(expenseIds)) {
@@ -494,6 +537,8 @@ try {
     }
     throw ex;
 }</code></pre>
+              </div>
+            </div>
           </article>
 
           <article class="detail-card panel">
@@ -514,8 +559,14 @@ try {
                 <p>5건 중 1건이 실패해도 4건은 완료 상태로 보존하고, 실패한 1건만 재처리할 수 있는 구조가 되었습니다.</p>
               </div>
             </div>
-            <span class="snippet-label">코드 스니펫</span>
-            <pre><code>List&lt;Long&gt; failedSettlementIds = new ArrayList&lt;&gt;();
+            <div class="evidence-layout">
+              <figure class="screen-shot">
+                <img src="/assets/images/duckchi-settlement-request-list.png" alt="Duckchi 정산 요청 목록 화면" />
+                <figcaption>관련 화면: 완료 내역과 대기 요청을 분리해 실패 건만 다시 요청할 수 있는 정산 목록</figcaption>
+              </figure>
+              <div class="snippet-panel">
+                <span class="snippet-label">코드 스니펫</span>
+                <pre><code>List&lt;Long&gt; failedSettlementIds = new ArrayList&lt;&gt;();
 boolean hasInsufficientBalanceFailure = false;
 
 for (Long settlementId : sortedSettlementIds) {
@@ -535,6 +586,8 @@ if (!failedSettlementIds.isEmpty()) {
     }
     throw new CustomException(ErrorCode.SETTLEMENT_TRANSFER_PARTIAL, failedSettlementIds);
 }</code></pre>
+              </div>
+            </div>
           </article>
 
           <article class="detail-card panel">
@@ -555,8 +608,14 @@ if (!failedSettlementIds.isEmpty()) {
                 <p>금융 요청번호 UNIQUE 제약과 멱등키 재사용으로 같은 settlement의 중복 송금 요청을 차단했습니다.</p>
               </div>
             </div>
-            <span class="snippet-label">코드 스니펫</span>
-            <pre><code>@Transactional(propagation = Propagation.REQUIRES_NEW)
+            <div class="evidence-layout">
+              <figure class="screen-shot">
+                <img src="/assets/images/duckchi-settlement-complete.png" alt="Duckchi 정산 완료 화면" />
+                <figcaption>관련 화면: 금융 요청이 완료된 settlement만 완료 상태로 전환해 사용자에게 성공 결과를 보여주는 흐름</figcaption>
+              </figure>
+              <div class="snippet-panel">
+                <span class="snippet-label">코드 스니펫</span>
+                <pre><code>@Transactional(propagation = Propagation.REQUIRES_NEW)
 public String ensureFinanceRequestUniqueNo(Long settlementId) {
     Settlement settlement = settlementRepository.findByIdForUpdate(settlementId)
         .orElseThrow(() =&gt; new CustomException(ErrorCode.SETTLEMENT_NOT_FOUND));
@@ -568,6 +627,8 @@ public String ensureFinanceRequestUniqueNo(Long settlementId) {
     settlementRepository.flush();
     return settlement.getFinanceRequestUniqueNo();
 }</code></pre>
+              </div>
+            </div>
           </article>
 
           <article class="detail-card panel">
@@ -588,8 +649,14 @@ public String ensureFinanceRequestUniqueNo(Long settlementId) {
                 <p>혼합 실패 상황에서도 잔액 부족은 <code>SET-409-8</code>, 일반 부분 실패는 <code>SET-409-6</code>으로 분리해 복구 액션을 명확히 했습니다.</p>
               </div>
             </div>
-            <span class="snippet-label">코드 스니펫</span>
-            <pre><code>try {
+            <div class="evidence-layout">
+              <figure class="screen-shot">
+                <img src="/assets/images/duckchi-settlement-request-toast.png" alt="Duckchi 정산 요청 알림 화면" />
+                <figcaption>관련 화면: 사용자가 받은 정산 요청을 수락하거나 내역으로 이동하는 결제 진입점</figcaption>
+              </figure>
+              <div class="snippet-panel">
+                <span class="snippet-label">코드 스니펫</span>
+                <pre><code>try {
     TransferResponse response = financeClient.transfer(transferRequest);
     validateFinanceResponse(response);
     return response;
@@ -608,6 +675,8 @@ private void validateFinanceResponse(TransferResponse response) {
         throw new CustomException(ErrorCode.SETTLEMENT_INSUFFICIENT_BALANCE);
     }
 }</code></pre>
+              </div>
+            </div>
           </article>
 
           <article class="detail-card panel">
@@ -628,8 +697,14 @@ private void validateFinanceResponse(TransferResponse response) {
                 <p>N개 정산 항목 기준 제목 N회 + 참여자 수 N회 반복 조회 가능성을 2회 배치 조회로 줄였습니다.</p>
               </div>
             </div>
-            <span class="snippet-label">코드 스니펫</span>
-            <pre><code>List&lt;Long&gt; expenseIds = settlements.stream()
+            <div class="evidence-layout">
+              <figure class="screen-shot">
+                <img src="/assets/images/duckchi-settlement-list.png" alt="Duckchi 정산 탭 화면" />
+                <figcaption>관련 화면: 참여 결제, 완료 정산, 요청 목록을 한 화면에서 조립해 보여주는 정산 탭</figcaption>
+              </figure>
+              <div class="snippet-panel">
+                <span class="snippet-label">코드 스니펫</span>
+                <pre><code>List&lt;Long&gt; expenseIds = settlements.stream()
     .map(settlement -&gt; settlement.getExpense().getId())
     .distinct()
     .toList();
@@ -638,6 +713,8 @@ Map&lt;Long, String&gt; expenseTitleMap =
     expenseRepository.findExpenseTitlesByIds(expenseIds);
 Map&lt;Long, Long&gt; participantCountMap =
     expenseRepository.countParticipantsByExpenseIds(expenseIds);</code></pre>
+              </div>
+            </div>
           </article>
         </div>
       </section>
