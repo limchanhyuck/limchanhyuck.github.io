@@ -6,7 +6,7 @@
     <title>Duckchi Pay Service | 구현상세</title>
     <meta
       name="description"
-      content="Duckchi Pay Service의 정산 생애주기 설계, 아키텍처, 동시성 제어, 멱등 처리, Partial Success, 실시간 랭킹, fail-safe UX 구현상세 페이지"
+      content="Duckchi Pay Service의 정산 중복 방지, 건별 트랜잭션, 멱등 처리, 부분 성공 송금, 금융 예외 복원 구현 상세 페이지"
     />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -331,6 +331,18 @@
         font-size: 13px;
       }
 
+      .snippet-label {
+        display: inline-flex;
+        margin-top: 18px;
+        padding: 7px 13px;
+        border-radius: 999px;
+        border: 1px solid rgba(16, 185, 129, 0.28);
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--success);
+        font-size: 13px;
+        font-weight: 800;
+      }
+
       .note {
         margin-top: 16px;
         padding: 18px 20px;
@@ -385,11 +397,11 @@
     <main class="page">
       <header class="hero">
         <div class="eyebrow">Duckchi Pay Service · Implementation Details</div>
-        <h1>정산 생애주기를 끝까지 책임지는 Pay Backend 설계</h1>
+        <h1>중복·실패·재시도를 견디는 정산 백엔드 설계</h1>
         <p class="hero-copy">
           Duckchi는 모임 정산을 빠르게 끝내고, 정산 이후에도 소비 데이터를 남겨 분석까지 연결하는 더치페이 서비스입니다.
-          Pay Service에서 모임·정산 백엔드를 담당하며, 정산 요청 생성부터 송금 처리, 권한 검증, 금융 예외 대응까지 정산의
-          전체 생애주기를 설계·구현했습니다.
+          Pay Service에서 모임·정산 백엔드를 담당하며, 정산 요청 생성부터 다건 송금, 수동 완료, 대기/상세 조회까지 정산의
+          핵심 생애주기를 설계·구현했습니다.
         </p>
         <div class="chips">
           <span class="chip">Spring Boot</span>
@@ -397,10 +409,9 @@
           <span class="chip">MySQL</span>
           <span class="chip">Spring Cloud Gateway</span>
           <span class="chip">OpenFeign</span>
-          <span class="chip">Redis</span>
-          <span class="chip">Kafka</span>
-          <span class="chip">SSE</span>
-          <span class="chip">React Native</span>
+          <span class="chip">Pessimistic Lock</span>
+          <span class="chip">REQUIRES_NEW</span>
+          <span class="chip">Idempotency Key</span>
         </div>
         <div class="hero-actions">
           <a class="button primary" href="/#projects">포트폴리오로 돌아가기</a>
@@ -412,38 +423,35 @@
         <div class="section-title">Overview</div>
         <div class="overview">
           <div class="card panel">
-            <h3>내 역할</h3>
+            <h3>담당 범위</h3>
             <ul class="key-list">
               <li>Pay Service에서 정산 요청 생성, 다건 송금, 수동 완료, 정산 상세/대기 조회 API를 설계·구현</li>
-              <li>권한 검증, 멤버십 검증, 정산 상태 전이, 외부 금융 API 오류 매핑까지 정산 도메인 규칙 정리</li>
-              <li>자동이체 동의 확인과 fail-safe 분기까지 프론트 흐름과 백엔드 에러 계약을 함께 설계</li>
-              <li>구현 계획서 27건, 개발일지 29건, 트러블슈팅 15건 등 총 71건 문서화</li>
+              <li>결제건 기준 정산 생성, 송금 실행, 정산 상태 전이, 권한·멤버십 검증을 서버 규칙으로 정리</li>
+              <li>외부 금융 API 실패를 정산 도메인 에러로 복원하고 재시도 가능한 실패 ID를 응답에 포함</li>
+              <li>room/settlement 조회에서 반복 조회를 배치 조회로 바꿔 목록·상세 응답 비용을 낮춤</li>
             </ul>
           </div>
           <div class="card panel">
-            <h3>핵심 성과</h3>
+            <h3>핵심 지표</h3>
             <ul class="key-list">
-              <li>모임/정산 핵심 API 13개를 설계·구현하며 정산 요청부터 송금 완료까지 핵심 흐름을 구축했습니다.</li>
-              <li>중복 정산 요청 차단, 건별 독립 트랜잭션, 멱등키 적용으로 정산 무결성과 재시도 안정성을 확보했습니다.</li>
-              <li>Partial Success, 외부 금융 오류 복원, fail-safe 분기로 운영 복구성과 사용자 안전성을 함께 높였습니다.</li>
+              <li>Room/Settlement 중심 백엔드 API 13개를 맡아 정산 요청부터 송금 완료까지 연결</li>
+              <li><code>settlements</code> UNIQUE 3종으로 결제건·사용자·금융 요청번호 단위 중복 반영 차단</li>
+              <li>최대 30건 다건 송금을 건별 독립 트랜잭션으로 분리해 실패 건만 재처리 가능</li>
+              <li>room/settlement 도메인 테스트 파일 19개로 중복 요청, 부분 실패, 잔액 부족, 재시도 흐름 검증</li>
             </ul>
           </div>
         </div>
       </section>
 
       <section class="section">
-        <div class="section-title">Architecture</div>
+        <div class="section-title">Problem Framing</div>
         <div class="architecture panel">
-          <h2>서비스 아키텍처</h2>
+          <h2>정산 백엔드에서 닫아야 했던 실패 시나리오</h2>
           <p class="hero-copy" style="margin-top: 14px; font-size: 16px;">
-            Gateway, Core, Payment, Insight 서버를 분리하고, 결제 요청은 동기 흐름으로, 분석·알림은 Redis/Kafka 기반 비동기
-            흐름으로 분리했습니다. 운영 관점에서는 Jenkins 기반 배포, Nginx 리버스 프록시, RDS 분리, 외부 금융/푸시/OCR
-            연동까지 고려한 구조입니다.
-          </p>
-          <img src="/assets/images/duckchi-architecture.png" alt="Duckchi architecture" />
-          <p class="architecture-caption">
-            실시간 랭킹 반영은 <code>revision 원자 증가 + event cache + SSE ranking.updated push</code> 구조를 사용해 폴링 없이
-            순서를 보장하면서 즉시 갱신되도록 구성했습니다.
+            정산은 단순히 송금 API를 호출하는 기능이 아니라, 같은 결제건에 대한 중복 요청, 여러 계좌로 보내는 다건 송금 중
+            일부 실패, 외부 금융망 재시도, 잔액 부족처럼 사용자의 돈과 직접 연결되는 실패를 서버에서 일관되게 처리해야 하는
+            도메인입니다. Duckchi Pay Service는 이 흐름을 잠금, UNIQUE 제약, 건별 트랜잭션, 멱등키, 오류 우선순위로 나누어
+            정리했습니다.
           </p>
         </div>
       </section>
@@ -453,29 +461,29 @@
         <div class="detail-grid">
           <article class="detail-card panel">
             <div class="detail-head">
-              <h2 class="detail-title">정산 요청 중복/레이스 방지</h2>
+              <h2 class="detail-title">중복 정산 요청을 잠금 + UNIQUE 3종으로 차단</h2>
             </div>
             <div class="detail-meta">
               <div class="meta-box">
                 <strong>문제</strong>
-                <p>동일 결제건에 대해 정산 요청이 동시에 들어오면 중복 settlement가 생성될 수 있었습니다.</p>
+                <p>동일 결제건에 대해 정산 요청이 동시에 들어오면 같은 payer에 대한 settlement가 중복 생성될 수 있었습니다.</p>
               </div>
               <div class="meta-box">
                 <strong>해결</strong>
-                <p>입력 정규화, <code>FOR UPDATE</code> 잠금, <code>flush</code> 시점 UNIQUE 위반 감지를 함께 적용했습니다.</p>
+                <p>요청 ID를 정규화한 뒤 결제건을 <code>FOR UPDATE</code>로 잠그고, 저장 직후 <code>flush</code>로 UNIQUE 위반을 즉시 감지했습니다.</p>
               </div>
               <div class="meta-box">
                 <strong>성과</strong>
-                <p>서비스 계층과 DB 계층 양쪽에서 레이스를 차단해 정산 무결성을 강화했습니다.</p>
+                <p>서비스 계층 검증과 DB UNIQUE 3종을 함께 적용해 중복 정산 생성과 중복 금융 요청을 이중 차단했습니다.</p>
               </div>
             </div>
+            <span class="snippet-label">코드 스니펫</span>
             <pre><code>List&lt;Long&gt; expenseIds = validateAndNormalizeIds(request.requestedExpenseIds());
 List&lt;Expense&gt; expenses = expenseRepository.findAllByIdInForUpdate(expenseIds);
 
-validateAllExpensesExist(expenseIds, expenses);
-validateRequester(currentUserId, expenses);
-validateRoomMembership(currentUserId, expenses);
-validateExpenseStatus(expenses);
+if (settlementRepository.existsByExpenseIdIn(expenseIds)) {
+    throw new CustomException(ErrorCode.SETTLEMENT_ALREADY_REQUESTED);
+}
 
 try {
     settlementRepository.saveAll(settlements);
@@ -490,22 +498,23 @@ try {
 
           <article class="detail-card panel">
             <div class="detail-head">
-              <h2 class="detail-title">다건 송금의 Partial Success 설계</h2>
+              <h2 class="detail-title">다건 송금 실패를 건별 트랜잭션으로 격리</h2>
             </div>
             <div class="detail-meta">
               <div class="meta-box">
                 <strong>문제</strong>
-                <p>배치 송금에서 한 건 실패가 전체 실패로 이어지면 사용자와 운영자 모두 복구 비용이 커졌습니다.</p>
+                <p>여러 계좌로 한 번에 송금할 때 1건 실패가 전체 롤백으로 번지면 성공 가능한 정산까지 모두 다시 처리해야 했습니다.</p>
               </div>
               <div class="meta-box">
                 <strong>해결</strong>
-                <p>실패 ID를 수집하고, 잔액 부족은 우선 에러로 분리해 성공 건은 유지하도록 설계했습니다.</p>
+                <p>각 settlement 송금을 <code>REQUIRES_NEW</code> 트랜잭션으로 실행하고 실패 ID만 수집해 부분 성공 응답으로 분리했습니다.</p>
               </div>
               <div class="meta-box">
                 <strong>성과</strong>
-                <p>성공 건은 그대로 확정하고 실패 건만 재처리할 수 있어 운영 복구 속도가 빨라졌습니다.</p>
+                <p>5건 중 1건이 실패해도 4건은 완료 상태로 보존하고, 실패한 1건만 재처리할 수 있는 구조가 되었습니다.</p>
               </div>
             </div>
+            <span class="snippet-label">코드 스니펫</span>
             <pre><code>List&lt;Long&gt; failedSettlementIds = new ArrayList&lt;&gt;();
 boolean hasInsufficientBalanceFailure = false;
 
@@ -530,53 +539,56 @@ if (!failedSettlementIds.isEmpty()) {
 
           <article class="detail-card panel">
             <div class="detail-head">
-              <h2 class="detail-title">건별 독립 트랜잭션 + 멱등키 송금 실행기</h2>
+              <h2 class="detail-title">금융망 재시도 멱등키를 선커밋</h2>
             </div>
             <div class="detail-meta">
               <div class="meta-box">
                 <strong>문제</strong>
-                <p>외부 금융망 호출이 재시도될 때 중복 송금이나 상태 꼬임이 발생할 위험이 있었습니다.</p>
+                <p>외부 금융망 호출 후 네트워크 실패가 발생하면 재시도 과정에서 같은 송금이 중복 반영될 위험이 있었습니다.</p>
               </div>
               <div class="meta-box">
                 <strong>해결</strong>
-                <p><code>REQUIRES_NEW</code>로 건별 트랜잭션을 분리하고, 멱등키와 행 잠금으로 경쟁 상태를 제어했습니다.</p>
+                <p><code>finance_request_unique_no</code>를 별도 트랜잭션에서 먼저 확정하고, 이후 재시도는 기존 키를 재사용하게 했습니다.</p>
               </div>
               <div class="meta-box">
                 <strong>성과</strong>
-                <p>배치 중 실패 격리와 재시도 안정성을 동시에 확보했습니다.</p>
+                <p>금융 요청번호 UNIQUE 제약과 멱등키 재사용으로 같은 settlement의 중복 송금 요청을 차단했습니다.</p>
               </div>
             </div>
+            <span class="snippet-label">코드 스니펫</span>
             <pre><code>@Transactional(propagation = Propagation.REQUIRES_NEW)
-public void transferOne(Long currentUserId, Long settlementId) {
-    String financeRequestUniqueNo =
-        settlementTransferIdempotencyService.ensureFinanceRequestUniqueNo(settlementId);
-
+public String ensureFinanceRequestUniqueNo(Long settlementId) {
     Settlement settlement = settlementRepository.findByIdForUpdate(settlementId)
         .orElseThrow(() =&gt; new CustomException(ErrorCode.SETTLEMENT_NOT_FOUND));
 
-    validatePayerAuthorization(currentUserId, settlement);
-    validatePendingStatus(settlement);
+    if (settlement.getFinanceRequestUniqueNo() != null) {
+        return settlement.getFinanceRequestUniqueNo();
+    }
+    settlement.assignFinanceRequestUniqueNo(createFinanceRequestUniqueNo());
+    settlementRepository.flush();
+    return settlement.getFinanceRequestUniqueNo();
 }</code></pre>
           </article>
 
           <article class="detail-card panel">
             <div class="detail-head">
-              <h2 class="detail-title">외부 금융 오류를 도메인 에러로 정교하게 복원</h2>
+              <h2 class="detail-title">잔액 부족을 일반 부분 실패와 분리</h2>
             </div>
             <div class="detail-meta">
               <div class="meta-box">
                 <strong>문제</strong>
-                <p>외부 API 에러 포맷이 불규칙해 프론트와 사용자 입장에서 일관된 해석이 어려웠습니다.</p>
+                <p>금융 API의 잔액 부족 코드가 일반 부분 실패로 묶이면 사용자는 충전이 필요한 상황인지 재시도가 필요한 상황인지 구분할 수 없었습니다.</p>
               </div>
               <div class="meta-box">
                 <strong>해결</strong>
-                <p><code>H0000</code>, <code>A1014</code> 등 응답코드와 예외 신호를 분석해 잔액 부족과 외부 장애를 분리했습니다.</p>
+                <p><code>A1014</code>를 응답 본문과 Feign 예외 경로에서 모두 감지하고, 일반 부분 실패보다 우선순위가 높은 도메인 에러로 매핑했습니다.</p>
               </div>
               <div class="meta-box">
                 <strong>성과</strong>
-                <p>충전 유도, 재시도, 안내 메시지 분기가 명확해져 UX와 운영 대응 품질이 좋아졌습니다.</p>
+                <p>혼합 실패 상황에서도 잔액 부족은 <code>SET-409-8</code>, 일반 부분 실패는 <code>SET-409-6</code>으로 분리해 복구 액션을 명확히 했습니다.</p>
               </div>
             </div>
+            <span class="snippet-label">코드 스니펫</span>
             <pre><code>try {
     TransferResponse response = financeClient.transfer(transferRequest);
     validateFinanceResponse(response);
@@ -600,69 +612,32 @@ private void validateFinanceResponse(TransferResponse response) {
 
           <article class="detail-card panel">
             <div class="detail-head">
-              <h2 class="detail-title">랭킹 실시간 반영 아키텍처</h2>
+              <h2 class="detail-title">정산 조회 반복 조회를 배치 조회로 축소</h2>
             </div>
             <div class="detail-meta">
               <div class="meta-box">
                 <strong>문제</strong>
-                <p>폴링 기반 랭킹 갱신은 지연과 트래픽 낭비가 있었고, 이벤트 순서 보장도 어려웠습니다.</p>
+                <p>정산 대기 목록은 결제 제목과 참여자 수가 함께 필요해 항목별 조회가 반복되면 N+1 형태로 커질 수 있었습니다.</p>
               </div>
               <div class="meta-box">
                 <strong>해결</strong>
-                <p><code>revision</code> 원자 증가 후 이벤트 캐시 저장, SSE로 <code>ranking.updated</code>를 push 했습니다.</p>
+                <p><code>expenseIds</code>를 모아 제목과 참여자 수를 각각 한 번의 배치 조회로 가져오고 Map으로 조립했습니다.</p>
               </div>
               <div class="meta-box">
                 <strong>성과</strong>
-                <p>순서 보장과 즉시성이 필요한 실시간 랭킹 UX를 안정적으로 제공할 수 있었습니다.</p>
+                <p>N개 정산 항목 기준 제목 N회 + 참여자 수 N회 반복 조회 가능성을 2회 배치 조회로 줄였습니다.</p>
               </div>
             </div>
-            <pre><code>RoomRankingRevision revisionEntity = roomRankingRevisionRepository.findByRoomIdForUpdate(roomId)
-    .orElseGet(() =&gt; roomRankingRevisionRepository.save(RoomRankingRevision.initialize(roomId)));
+            <span class="snippet-label">코드 스니펫</span>
+            <pre><code>List&lt;Long&gt; expenseIds = settlements.stream()
+    .map(settlement -&gt; settlement.getExpense().getId())
+    .distinct()
+    .toList();
 
-long newRevision = revisionEntity.increaseRevision();
-roomRankingRevisionRepository.save(revisionEntity);
-
-RoomRankingUpdateEventResponse event = new RoomRankingUpdateEventResponse(
-    roomId, LocalDateTime.now(), newRevision, changes, snapshot.top3(), snapshot.items()
-);
-
-roomRankingEventCache.add(roomId, event);
-emitter.send(SseEmitter.event().id(String.valueOf(event.revision())).name("ranking.updated").data(event));</code></pre>
-          </article>
-
-          <article class="detail-card panel">
-            <div class="detail-head">
-              <h2 class="detail-title">프론트 Fail-safe 이체 분기 설계</h2>
-            </div>
-            <div class="detail-meta">
-              <div class="meta-box">
-                <strong>문제</strong>
-                <p>자동이체 동의 조회가 실패했는데도 자동이체로 진행되면 보안상, 동작상 모두 위험했습니다.</p>
-              </div>
-              <div class="meta-box">
-                <strong>해결</strong>
-                <p>조회 실패를 <code>false</code>로 처리하고 비밀번호 인증 경로로 강제 우회시키는 fail-safe 정책을 적용했습니다.</p>
-              </div>
-              <div class="meta-box">
-                <strong>성과</strong>
-                <p>네트워크 실패 시에도 안전한 동작을 기본값으로 보장하는 UX를 만들었습니다.</p>
-              </div>
-            </div>
-            <pre><code>const checkAutoDebitAgreed = useCallback(async (): Promise&lt;boolean&gt; =&gt; {
-  try {
-    return await fetchAutoDebitConsent(roomId);
-  } catch {
-    return false;
-  }
-}, [roomId]);
-
-const isAgreed = await checkAutoDebitAgreed();
-if (isAgreed) {
-  openTransferActionScreen(action);
-  return;
-}
-setPending(action);
-rootNavigation.navigate('PayPasswordInput');</code></pre>
+Map&lt;Long, String&gt; expenseTitleMap =
+    expenseRepository.findExpenseTitlesByIds(expenseIds);
+Map&lt;Long, Long&gt; participantCountMap =
+    expenseRepository.countParticipantsByExpenseIds(expenseIds);</code></pre>
           </article>
         </div>
       </section>
