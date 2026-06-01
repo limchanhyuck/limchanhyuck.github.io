@@ -419,7 +419,7 @@
               <li>30일 식단 생성 API와 7일 선응답 + 23일 비동기 chunk 처리 구현</li>
               <li>LLM 재시도, JSON 정제, 템플릿 fallback, ±10% 칼로리 스케일링 파이프라인 설계</li>
               <li>30일 단일 LLM 프롬프트 timeout을 7일 선응답 + 23일 async chunk 처리로 분리</li>
-              <li>토마토→토마토 주스 같은 상품 검색 노이즈를 검색어 정규화·카테고리 필터·스코어링/rerank로 보정</li>
+              <li>재료명 기반 상품 검색 노이즈를 검색어 정규화·카테고리 필터·스코어링/rerank로 보정</li>
               <li>체중 기록 UNIQUE + upsert 흐름으로 날짜별 체중 데이터 중복 차단</li>
             </ul>
           </div>
@@ -529,7 +529,7 @@ if (currentTotal &lt; targetTotal * 0.9 || currentTotal &gt; targetTotal * 1.1) 
               <img src="/assets/images/avofit-shopping.png" alt="Avofit 장보기 추천 화면" loading="lazy" />
             </div>
             <div class="flow-content">
-              <h2 class="flow-title">토마토→토마토 주스 오추천을 3단계 필터로 보정</h2>
+              <h2 class="flow-title">재료명 기반 상품 검색 노이즈를 3단계 필터로 보정</h2>
               <div class="flow-points">
                 <div class="flow-point">
                   <strong>문제</strong>
