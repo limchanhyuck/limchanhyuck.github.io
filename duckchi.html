@@ -481,14 +481,14 @@
       </section>
 
       <section class="section">
-        <div class="section-title">Problem Framing</div>
+        <div class="section-title">문제 정의</div>
         <div class="architecture panel">
-          <h2>정산 백엔드에서 닫아야 했던 실패 시나리오</h2>
+          <h2>정산 실패를 복구 가능한 상태로 분리</h2>
           <p class="hero-copy" style="margin-top: 14px; font-size: 16px;">
-            정산은 단순히 송금 API를 호출하는 기능이 아니라, 같은 결제건에 대한 중복 요청, 여러 계좌로 보내는 다건 송금 중
-            일부 실패, 외부 금융망 재시도, 잔액 부족처럼 사용자의 돈과 직접 연결되는 실패를 서버에서 일관되게 처리해야 하는
-            도메인입니다. Duckchi Pay Service는 이 흐름을 잠금, UNIQUE 제약, 건별 트랜잭션, 멱등키, 오류 우선순위로 나누어
-            정리했습니다.
+            정산은 같은 결제건에 대한 중복 요청, 여러 명에게 보내는 송금 중 일부 실패, 외부 금융망 재시도, 잔액 부족이
+            동시에 발생할 수 있는 흐름입니다. 이 문제를 하나의 실패로 묶으면 이미 성공한 송금까지 다시 처리해야 하고,
+            사용자는 무엇을 해결해야 하는지 알기 어렵습니다. Duckchi Pay Service는 중복 생성은 잠금과 DB 제약으로 막고,
+            송금 실패는 건별 트랜잭션과 실패 ID로 분리해 성공 건은 보존하고 실패 건만 다시 처리하도록 설계했습니다.
           </p>
         </div>
       </section>
@@ -642,11 +642,11 @@ public String ensureFinanceRequestUniqueNo(Long settlementId) {
               </div>
               <div class="meta-box">
                 <strong>해결</strong>
-                <p><code>A1014</code>를 응답 본문과 Feign 예외 경로에서 모두 감지하고, 일반 부분 실패보다 우선순위가 높은 도메인 에러로 매핑했습니다.</p>
+                <p>금융 API의 잔액 부족 응답을 정상 응답과 예외 응답 양쪽에서 감지하고, 일반 부분 실패보다 우선 처리했습니다.</p>
               </div>
               <div class="meta-box">
                 <strong>성과</strong>
-                <p>혼합 실패 상황에서도 잔액 부족은 <code>SET-409-8</code>, 일반 부분 실패는 <code>SET-409-6</code>으로 분리해 복구 액션을 명확히 했습니다.</p>
+                <p>혼합 실패 상황에서도 잔액 부족은 충전 안내로, 그 외 일부 실패는 실패 건 재시도 안내로 분리해 사용자의 다음 행동을 명확히 했습니다.</p>
               </div>
             </div>
             <div class="evidence-layout">
