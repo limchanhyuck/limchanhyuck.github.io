@@ -314,31 +314,6 @@
         line-height: 1.65;
       }
 
-      .snippet-label {
-        display: inline-flex;
-        margin-top: 18px;
-        padding: 6px 10px;
-        border-radius: 999px;
-        border: 1px solid rgba(52, 211, 153, 0.18);
-        background: rgba(52, 211, 153, 0.08);
-        color: var(--accent);
-        font-size: 12px;
-        font-weight: 800;
-        letter-spacing: 0.04em;
-      }
-
-      pre {
-        margin: 10px 0 0;
-        overflow-x: auto;
-        padding: 20px;
-        border-radius: 18px;
-        border: 1px solid rgba(52, 211, 153, 0.16);
-        background: #07111d;
-        color: #daf7ec;
-        line-height: 1.65;
-        font-size: 13px;
-      }
-
       .footer {
         padding: 24px 0 72px;
         color: var(--muted);
@@ -476,14 +451,6 @@
                   <span>전체 생성 60초 이상/timeout 흐름을 초기 응답 15초대로 줄이고, 남은 23일은 비동기 완료되도록 분리했습니다.</span>
                 </div>
               </div>
-              <span class="snippet-label">코드 스니펫</span>
-              <pre><code>generateAndSaveChunk(mealPlan, allDays, basePayload, 0, 7, targetKcalPerDay, mealsPerDay);
-
-CompletableFuture.runAsync(() -&gt;
-    generateRemainingWeeksParallel(mealPlan, allDays, basePayload, targetKcalPerDay, mealsPerDay)
-);
-
-return getMealPlan(mealPlan.getId());</code></pre>
             </div>
           </article>
 
@@ -507,20 +474,6 @@ return getMealPlan(mealPlan.getId());</code></pre>
                   <span>생성 결과가 목표 칼로리의 ±10%를 벗어나면 자동 보정되도록 서버 규칙을 고정했습니다.</span>
                 </div>
               </div>
-              <span class="snippet-label">코드 스니펫</span>
-              <pre><code>itemsForDay = (skeleton != null)
-    ? buildItemsFromAiWithFixedRules(...)
-    : buildItemsFromTemplate(...);
-
-if (currentTotal &lt; targetTotal * 0.9 || currentTotal &gt; targetTotal * 1.1) {
-    double scale = (double) targetTotal / currentTotal;
-    scale = Math.max(0.5, Math.min(1.5, scale));
-
-    for (MealItem item : result) {
-        item.setGrams((int) Math.round(item.getGrams() * scale));
-        calculateAndSetNutrients(item);
-    }
-}</code></pre>
             </div>
           </article>
 
@@ -544,22 +497,6 @@ if (currentTotal &lt; targetTotal * 0.9 || currentTotal &gt; targetTotal * 1.1) 
                   <span>Top20 검색 후보를 Top10 후보로 압축한 뒤 최종 상품을 선택해 토마토 주스 같은 노이즈 후보가 대표 상품으로 올라가는 경로를 차단했습니다.</span>
                 </div>
               </div>
-              <span class="snippet-label">코드 스니펫</span>
-              <pre><code>String normalizedQuery = queryNormalizer.normalize(ingredientName);
-if (!containsAny(normalizedQuery, "식품", "식재료")) {
-    normalizedQuery += " 식품";
-}
-
-String targetCatNo = categoryService.findBestCategory(ingredientName).orElse(null);
-ShoppingClientResult result = shoppingClient.searchProducts(normalizedQuery, 1, 20, targetCatNo);
-
-List&lt;ShoppingProduct&gt; products = filterProducts(result.getProducts());
-List&lt;ShoppingProduct&gt; topCandidates =
-    productScorer.selectTopN(products, ingredientName, allocatedBudget, totalGram, 10);
-
-ShoppingProduct aiSelected = aiReranker.rerank(ingredientName, allocatedBudget, topCandidates);
-BudgetGuardResult guarded =
-    enforceBudgetFit(ingredientName, allocatedBudget, totalGram, topCandidates, aiSelected, "AI_SELECTED");</code></pre>
             </div>
           </article>
 
@@ -583,18 +520,6 @@ BudgetGuardResult guarded =
                   <span>날짜별 체중 데이터를 1건으로 고정해 대시보드의 체중 변화, BMI, 5단계 아바타 상태 계산 기준을 일관되게 유지했습니다.</span>
                 </div>
               </div>
-              <span class="snippet-label">코드 스니펫</span>
-              <pre><code>UNIQUE KEY uk_user_date (user_id, record_date)
-
-WeightRecord existing =
-    weightRecordMapper.findByUserIdAndDate(userId, request.getRecordDate());
-
-if (existing == null) {
-    weightRecordMapper.insertWeightRecord(record);
-} else {
-    existing.setWeight(request.getWeight());
-    weightRecordMapper.updateWeightRecord(existing);
-}</code></pre>
             </div>
           </article>
         </div>

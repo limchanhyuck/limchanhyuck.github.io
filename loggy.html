@@ -237,30 +237,6 @@
         font-size: 15px;
       }
 
-      .snippet-label {
-        display: inline-flex;
-        margin-top: 4px;
-        padding: 6px 10px;
-        border-radius: 999px;
-        background: var(--accent-soft);
-        color: var(--accent);
-        font-size: 12px;
-        font-weight: 900;
-        letter-spacing: 0.06em;
-      }
-
-      pre {
-        margin: 12px 0 0;
-        overflow-x: auto;
-        padding: 20px;
-        border-radius: 18px;
-        border: 1px solid rgba(56, 189, 248, 0.16);
-        background: #08111f;
-        color: #d9ecff;
-        line-height: 1.65;
-        font-size: 13px;
-      }
-
       .note {
         margin-top: 18px;
         padding: 18px 20px;
@@ -361,15 +337,6 @@
                   <span>회의 20개 기준 참여자 count 최대 20회 → 집계 1회, 생성자 조회 최대 20회 → IN 조회 1회 구조로 줄였습니다.</span>
                 </div>
               </div>
-              <span class="snippet-label">코드 스니펫</span>
-              <pre><code>Map&lt;Long, Long&gt; counts = meetingMemberRepository.countByMeetingIdIn(meetingIds).stream()
-        .collect(Collectors.toMap(
-                MeetingMemberRepository.MeetingMemberCountView::getMeetingId,
-                MeetingMemberRepository.MeetingMemberCountView::getCount
-        ));
-
-Map&lt;Long, User&gt; userMap = userRepository.findByIdIn(userIds).stream()
-        .collect(Collectors.toMap(User::getId, Function.identity()));</code></pre>
             </div>
           </article>
 
@@ -393,17 +360,6 @@ Map&lt;Long, User&gt; userMap = userRepository.findByIdIn(userIds).stream()
                   <span>Redis/DB 2개 저장소를 유지하면서 클라이언트에는 `seq` 기준 1개 타임라인으로 병합해 내려주도록 정리했습니다.</span>
                 </div>
               </div>
-              <span class="snippet-label">코드 스니펫</span>
-              <pre><code>for (ChatMessageDto msg : redis) {
-    if (msg.getSeq() != null) {
-        map.put(msg.getSeq(), msg);
-    }
-}
-for (ChatMessageDto msg : db) {
-    if (msg.getSeq() != null) {
-        map.put(msg.getSeq(), msg);
-    }
-}</code></pre>
             </div>
           </article>
 
@@ -427,19 +383,6 @@ for (ChatMessageDto msg : db) {
                   <span>저장 전 `issueId + name` 1회 검증으로 같은 안건 안의 중복 결정 후보 생성을 차단했습니다.</span>
                 </div>
               </div>
-              <span class="snippet-label">코드 스니펫</span>
-              <pre><code>if (branchRepository.existsByIssueIdAndName(issueId, request.getName())) {
-    throw new CustomException(ErrorCode.BRANCH_NAME_DUPLICATE);
-}
-
-Branch branch = Branch.builder()
-        .issueId(issueId)
-        .createdBy(userId)
-        .name(request.getName())
-        .description(request.getDescription())
-        .build();
-
-branchRepository.save(branch);</code></pre>
             </div>
           </article>
 
@@ -463,12 +406,6 @@ branchRepository.save(branch);</code></pre>
                   <span>안건 20개 기준 브랜치 수 조회 최대 20회 → 집계 1회, 작성자 조회 최대 20회 → IN 조회 1회 패턴으로 줄였습니다.</span>
                 </div>
               </div>
-              <span class="snippet-label">코드 스니펫</span>
-              <pre><code>Map&lt;Long, Long&gt; branchCountMap = branchRepository.countByIssueIds(issueIds).stream()
-        .collect(Collectors.toMap(
-                row -&gt; (Long) row[0],
-                row -&gt; (Long) row[1]
-        ));</code></pre>
             </div>
           </article>
 
@@ -492,17 +429,6 @@ branchRepository.save(branch);</code></pre>
                   <span>핵심 Controller/WebSocket 매핑 29개와 핵심 도메인 `@Test` 115개 기준으로 정상/예외 흐름을 검증했습니다.</span>
                 </div>
               </div>
-              <span class="snippet-label">코드 스니펫</span>
-              <pre><code>public static RequestPostProcessor user(Long id) {
-    return request -&gt; {
-        CustomUserDetails details = userDetails(id);
-        Authentication authentication =
-                new UsernamePasswordAuthenticationToken(details, null, details.getAuthorities());
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        request.setUserPrincipal(authentication);
-        return request;
-    };
-}</code></pre>
             </div>
           </article>
         </div>

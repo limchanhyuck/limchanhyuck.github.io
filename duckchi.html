@@ -331,18 +331,6 @@
         font-size: 13px;
       }
 
-      .snippet-label {
-        display: inline-flex;
-        margin-top: 18px;
-        padding: 7px 13px;
-        border-radius: 999px;
-        border: 1px solid rgba(16, 185, 129, 0.28);
-        background: rgba(16, 185, 129, 0.1);
-        color: var(--success);
-        font-size: 13px;
-        font-weight: 800;
-      }
-
       .evidence-layout {
         display: grid;
         grid-template-columns: minmax(220px, 360px) minmax(0, 1fr);
@@ -373,10 +361,6 @@
         font-size: 13px;
         line-height: 1.55;
         background: #ffffff;
-      }
-
-      .snippet-panel pre {
-        margin-top: 10px;
       }
 
       .note {
@@ -519,25 +503,6 @@
                 <img src="/assets/images/duckchi-settlement-form.png" alt="Duckchi 정산 요청 추가 화면" />
                 <figcaption>관련 화면: 정산 제목·금액·참여자를 지정해 같은 결제건 기준으로 정산 요청을 생성하는 흐름</figcaption>
               </figure>
-              <div class="snippet-panel">
-                <span class="snippet-label">코드 스니펫</span>
-                <pre><code>List&lt;Long&gt; expenseIds = validateAndNormalizeIds(request.requestedExpenseIds());
-List&lt;Expense&gt; expenses = expenseRepository.findAllByIdInForUpdate(expenseIds);
-
-if (settlementRepository.existsByExpenseIdIn(expenseIds)) {
-    throw new CustomException(ErrorCode.SETTLEMENT_ALREADY_REQUESTED);
-}
-
-try {
-    settlementRepository.saveAll(settlements);
-    settlementRepository.flush();
-} catch (DataIntegrityViolationException ex) {
-    if (isSettlementUniqueViolation(ex)) {
-        throw new CustomException(ErrorCode.SETTLEMENT_ALREADY_REQUESTED);
-    }
-    throw ex;
-}</code></pre>
-              </div>
             </div>
           </article>
 
@@ -564,29 +529,6 @@ try {
                 <img src="/assets/images/duckchi-settlement-request-list.png" alt="Duckchi 정산 요청 목록 화면" />
                 <figcaption>관련 화면: 완료 내역과 대기 요청을 분리해 실패 건만 다시 요청할 수 있는 정산 목록</figcaption>
               </figure>
-              <div class="snippet-panel">
-                <span class="snippet-label">코드 스니펫</span>
-                <pre><code>List&lt;Long&gt; failedSettlementIds = new ArrayList&lt;&gt;();
-boolean hasInsufficientBalanceFailure = false;
-
-for (Long settlementId : sortedSettlementIds) {
-    try {
-        settlementTransferExecutor.transferOne(currentUserId, settlementId);
-    } catch (CustomException ex) {
-        failedSettlementIds.add(settlementId);
-        if (ErrorCode.SETTLEMENT_INSUFFICIENT_BALANCE.equals(ex.getErrorCode())) {
-            hasInsufficientBalanceFailure = true;
-        }
-    }
-}
-
-if (!failedSettlementIds.isEmpty()) {
-    if (hasInsufficientBalanceFailure) {
-        throw new CustomException(ErrorCode.SETTLEMENT_INSUFFICIENT_BALANCE, failedSettlementIds);
-    }
-    throw new CustomException(ErrorCode.SETTLEMENT_TRANSFER_PARTIAL, failedSettlementIds);
-}</code></pre>
-              </div>
             </div>
           </article>
 
@@ -613,21 +555,6 @@ if (!failedSettlementIds.isEmpty()) {
                 <img src="/assets/images/duckchi-settlement-complete.png" alt="Duckchi 정산 완료 화면" />
                 <figcaption>관련 화면: 금융 요청이 완료된 settlement만 완료 상태로 전환해 사용자에게 성공 결과를 보여주는 흐름</figcaption>
               </figure>
-              <div class="snippet-panel">
-                <span class="snippet-label">코드 스니펫</span>
-                <pre><code>@Transactional(propagation = Propagation.REQUIRES_NEW)
-public String ensureFinanceRequestUniqueNo(Long settlementId) {
-    Settlement settlement = settlementRepository.findByIdForUpdate(settlementId)
-        .orElseThrow(() =&gt; new CustomException(ErrorCode.SETTLEMENT_NOT_FOUND));
-
-    if (settlement.getFinanceRequestUniqueNo() != null) {
-        return settlement.getFinanceRequestUniqueNo();
-    }
-    settlement.assignFinanceRequestUniqueNo(createFinanceRequestUniqueNo());
-    settlementRepository.flush();
-    return settlement.getFinanceRequestUniqueNo();
-}</code></pre>
-              </div>
             </div>
           </article>
 
@@ -654,28 +581,6 @@ public String ensureFinanceRequestUniqueNo(Long settlementId) {
                 <img src="/assets/images/duckchi-settlement-request-toast.png" alt="Duckchi 정산 요청 알림 화면" />
                 <figcaption>관련 화면: 사용자가 받은 정산 요청을 수락하거나 내역으로 이동하는 결제 진입점</figcaption>
               </figure>
-              <div class="snippet-panel">
-                <span class="snippet-label">코드 스니펫</span>
-                <pre><code>try {
-    TransferResponse response = financeClient.transfer(transferRequest);
-    validateFinanceResponse(response);
-    return response;
-} catch (Exception ex) {
-    if (hasInsufficientBalanceSignal(ex)) {
-        throw new CustomException(ErrorCode.SETTLEMENT_INSUFFICIENT_BALANCE);
-    }
-    throw new CustomException(ErrorCode.FINANCE_API_ERROR);
-}
-
-private void validateFinanceResponse(TransferResponse response) {
-    if (response == null || response.header() == null) {
-        throw new CustomException(ErrorCode.FINANCE_API_ERROR);
-    }
-    if (FINANCE_INSUFFICIENT_BALANCE_CODE.equals(response.header().getResponseCode())) {
-        throw new CustomException(ErrorCode.SETTLEMENT_INSUFFICIENT_BALANCE);
-    }
-}</code></pre>
-              </div>
             </div>
           </article>
 
@@ -702,18 +607,6 @@ private void validateFinanceResponse(TransferResponse response) {
                 <img src="/assets/images/duckchi-settlement-list.png" alt="Duckchi 정산 탭 화면" />
                 <figcaption>관련 화면: 참여 결제, 완료 정산, 요청 목록을 한 화면에서 조립해 보여주는 정산 탭</figcaption>
               </figure>
-              <div class="snippet-panel">
-                <span class="snippet-label">코드 스니펫</span>
-                <pre><code>List&lt;Long&gt; expenseIds = settlements.stream()
-    .map(settlement -&gt; settlement.getExpense().getId())
-    .distinct()
-    .toList();
-
-Map&lt;Long, String&gt; expenseTitleMap =
-    expenseRepository.findExpenseTitlesByIds(expenseIds);
-Map&lt;Long, Long&gt; participantCountMap =
-    expenseRepository.countParticipantsByExpenseIds(expenseIds);</code></pre>
-              </div>
             </div>
           </article>
         </div>
