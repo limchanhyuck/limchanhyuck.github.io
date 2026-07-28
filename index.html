@@ -72,14 +72,15 @@
     <div id="root"></div>
     <script>
       window.addEventListener('load', function () {
-        var projects = document.getElementById('projects');
-        if (!projects || document.getElementById('project-summary-list')) return;
+        function mountProjectSummary() {
+          var projects = document.getElementById('projects');
+          if (!projects || document.getElementById('project-summary-list')) return;
 
-        var summary = document.createElement('section');
-        summary.id = 'project-summary-list';
-        summary.className = 'project-summary-list';
-        summary.setAttribute('aria-labelledby', 'project-summary-title');
-        summary.innerHTML = `
+          var summary = document.createElement('section');
+          summary.id = 'project-summary-list';
+          summary.className = 'project-summary-list';
+          summary.setAttribute('aria-labelledby', 'project-summary-title');
+          summary.innerHTML = `
           <h2 id="project-summary-title" class="project-summary-list__title">핵심 프로젝트 기여</h2>
           <div class="project-summary-list__grid">
             <article class="project-summary-card">
@@ -105,7 +106,17 @@
               </dl>
             </article>
           </div>`;
-        projects.parentNode.insertBefore(summary, projects);
+          projects.parentNode.insertBefore(summary, projects);
+        }
+
+        mountProjectSummary();
+        var root = document.getElementById('root');
+        if (root) {
+          new MutationObserver(mountProjectSummary).observe(root, {
+            childList: true,
+            subtree: true,
+          });
+        }
       });
     </script>
   </body>
