@@ -14,8 +14,99 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet" />
     <script type="module" crossorigin src="/assets/index-Co-RD7uQ.js"></script>
     <link rel="stylesheet" crossorigin href="/assets/index-D3f-OVS4.css">
+    <style>
+      .project-summary-list {
+        width: min(1120px, calc(100% - 32px));
+        margin: 0 auto 56px;
+        color: #e2e8f0;
+      }
+      .project-summary-list__title {
+        margin: 0 0 20px;
+        font-size: clamp(1.5rem, 3vw, 2rem);
+        font-weight: 800;
+        letter-spacing: -0.02em;
+      }
+      .project-summary-list__grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 18px;
+      }
+      .project-summary-card {
+        padding: 28px;
+        border: 1px solid rgba(96, 165, 250, 0.24);
+        border-radius: 20px;
+        background: rgba(15, 23, 42, 0.72);
+        box-shadow: 0 16px 42px rgba(2, 8, 23, 0.22);
+      }
+      .project-summary-card h3 {
+        margin: 0 0 24px;
+        color: #38bdf8;
+        font-size: 1.5rem;
+        font-weight: 800;
+      }
+      .project-summary-card dl { margin: 0; }
+      .project-summary-card dt {
+        margin-top: 18px;
+        color: #7dd3fc;
+        font-family: "Fira Code", monospace;
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+      }
+      .project-summary-card dt:first-child { margin-top: 0; }
+      .project-summary-card dd {
+        margin: 8px 0 0;
+        color: #cbd5e1;
+        font-size: 0.95rem;
+        line-height: 1.75;
+        word-break: keep-all;
+      }
+      @media (max-width: 720px) {
+        .project-summary-list { width: min(100% - 32px, 1120px); margin-bottom: 40px; }
+        .project-summary-list__grid { grid-template-columns: 1fr; }
+        .project-summary-card { padding: 22px; }
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root"></div>
+    <script>
+      window.addEventListener('load', function () {
+        var projects = document.getElementById('projects');
+        if (!projects || document.getElementById('project-summary-list')) return;
+
+        var summary = document.createElement('section');
+        summary.id = 'project-summary-list';
+        summary.className = 'project-summary-list';
+        summary.setAttribute('aria-labelledby', 'project-summary-title');
+        summary.innerHTML = `
+          <h2 id="project-summary-title" class="project-summary-list__title">핵심 프로젝트 기여</h2>
+          <div class="project-summary-list__grid">
+            <article class="project-summary-card">
+              <h3>Loggy</h3>
+              <dl>
+                <dt>담당 범위</dt>
+                <dd>Meeting·Issue·Branch·Notification 핵심 협업 흐름 설계·구현</dd>
+                <dt>핵심 기여</dt>
+                <dd>N+1과 분리 저장으로 발생한 조회 비용·맥락 단절을 배치 조회와 Redis·DB 단일 타임라인 병합으로 개선</dd>
+                <dt>결과</dt>
+                <dd>회의 20개 기준 반복 조회를 최대 40회에서 2회로 줄이고 재입장 후에도 논의가 이어지는 협업 구조 확보</dd>
+              </dl>
+            </article>
+            <article class="project-summary-card">
+              <h3>AvoFit</h3>
+              <dl>
+                <dt>담당 범위</dt>
+                <dd>30일 AI 식단 생성과 응답 안정화 흐름 설계·구현</dd>
+                <dt>핵심 기여</dt>
+                <dd>60초 이상 지연되던 단일 LLM 작업을 7일 우선 응답·23일 비동기 생성으로 분리하고 보정·fallback 적용</dd>
+                <dt>결과</dt>
+                <dd>첫 7일 식단을 약 15초대에 제공하고 나머지는 백그라운드에서 완성되는 생성 구조 확보</dd>
+              </dl>
+            </article>
+          </div>`;
+        projects.parentNode.insertBefore(summary, projects);
+      });
+    </script>
   </body>
 </html>
