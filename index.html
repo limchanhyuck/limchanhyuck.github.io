@@ -86,18 +86,15 @@
         word-break: keep-all;
       }
       .skills-proof-section__legend {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: center;
-        gap: 8px 18px;
-        margin: 18px auto 40px;
-        color: #64748b;
-        font-size: 0.76rem;
+        margin: 14px auto 40px;
+        color: #94a3b8;
+        text-align: center;
+        font-size: 0.8rem;
         line-height: 1.6;
       }
       .skills-proof-section__legend strong {
-        color: #94a3b8;
-        font-weight: 700;
+        color: #cbd5e1;
+        font-weight: 600;
       }
       .skills-proof-grid {
         display: grid;
@@ -113,6 +110,11 @@
         border-radius: 20px;
         background: rgba(var(--skill-accent-rgb), 0.045);
         box-shadow: 0 16px 42px rgba(2, 8, 23, 0.2);
+        transition: border-color 160ms ease;
+      }
+      .skills-proof-card:has(.skills-proof-card__project-link:hover),
+      .skills-proof-card:has(.skills-proof-card__project-link:focus-visible) {
+        border-color: rgba(var(--skill-accent-rgb), 0.52);
       }
       .skills-proof-card--backend {
         --skill-accent: #fb923c;
@@ -203,11 +205,32 @@
         line-height: 1.65;
         word-break: keep-all;
       }
-      .skills-proof-card__proof strong {
+      .skills-proof-card__project-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        border-radius: 4px;
+        color: #cbd5e1;
+        text-decoration: none;
+      }
+      .skills-proof-card__project-link strong {
         color: var(--skill-accent);
         font-weight: 700;
       }
-      .skills-proof-card__proof span {
+      .skills-proof-card__project-link:focus-visible {
+        outline: 2px solid var(--skill-accent);
+        outline-offset: 3px;
+      }
+      .skills-proof-card__project-arrow {
+        color: #64748b;
+        transition: color 160ms ease, transform 160ms ease;
+      }
+      .skills-proof-card__project-link:hover .skills-proof-card__project-arrow,
+      .skills-proof-card__project-link:focus-visible .skills-proof-card__project-arrow {
+        color: var(--skill-accent);
+        transform: translate(1px, -1px);
+      }
+      .skills-proof-card__proof-detail {
         display: block;
         margin-top: 4px;
         color: #cbd5e1;
@@ -249,7 +272,7 @@
         .project-summary-list__grid { grid-template-columns: 1fr; }
         .project-summary-card { padding: 22px; }
         .skills-proof-section { padding: 72px 16px; }
-        .skills-proof-section__legend { justify-content: flex-start; margin-bottom: 28px; }
+        .skills-proof-section__legend { margin-bottom: 28px; }
         .skills-proof-grid { grid-template-columns: 1fr; }
         .skills-proof-card { padding: 22px; }
         .skills-proof-supporting { grid-template-columns: 1fr; }
@@ -280,8 +303,7 @@
               <h2 id="skills-proof-title" class="skills-proof-section__title">Skills in Practice</h2>
               <p class="skills-proof-section__description">프로젝트에서 직접 설계·구현·개선한 범위를 대표 사례와 함께 정리했습니다.</p>
               <div class="skills-proof-section__legend" aria-label="숙련도 배지 기준">
-                <span><strong>직접 설계·구현</strong>: 요구사항 분석부터 구조 설계와 구현까지 주도</span>
-                <span><strong>프로젝트 적용·개선</strong>: 기존 구조에 기술을 적용하고 문제를 개선</span>
+                <strong>배지는 프로젝트에서 직접 수행한 범위를 기준으로 표시했습니다.</strong>
               </div>
               <div class="skills-proof-grid">
                 <article class="skills-proof-card skills-proof-card--backend">
@@ -289,17 +311,20 @@
                     <span class="skills-proof-card__icon" aria-hidden="true">
                       <svg viewBox="0 0 24 24"><path d="m8 9-4 3 4 3M16 9l4 3-4 3M14 5l-4 14"/></svg>
                     </span>
-                    <h3>Backend &amp; Transaction</h3>
+                    <h3>Backend &amp; Transaction Design</h3>
                   </div>
                   <span class="skills-proof-card__level">직접 설계·구현</span>
                   <div class="skills-proof-card__tags">
                     <span class="skills-proof-card__tag">Java</span>
                     <span class="skills-proof-card__tag">Spring Boot</span>
                     <span class="skills-proof-card__tag">JPA</span>
-                    <span class="skills-proof-card__tag">OpenFeign</span>
+                    <span class="skills-proof-card__tag">MySQL</span>
                   </div>
                   <p class="skills-proof-card__ability">트랜잭션 경계와 상태 전이를 설계하고, 중복 요청·부분 실패·재시도 흐름을 서버 규칙으로 제어했습니다.</p>
-                  <p class="skills-proof-card__proof"><strong>대표 사례</strong> · DuckChi<span>5건 중 1건 실패 시 성공 4건 보존, 실패 1건만 재처리</span></p>
+                  <p class="skills-proof-card__proof">
+                    <a class="skills-proof-card__project-link" href="/duckchi.html"><strong>대표 프로젝트</strong> · DuckChi <span class="skills-proof-card__project-arrow" aria-hidden="true">↗</span></a>
+                    <span class="skills-proof-card__proof-detail">5건 중 1건 실패 시 성공 4건의 상태를 유지하고, 실패 1건만 재처리하도록 구현했습니다.</span>
+                  </p>
                 </article>
 
                 <article class="skills-proof-card skills-proof-card--data">
@@ -317,7 +342,10 @@
                     <span class="skills-proof-card__tag">SQL</span>
                   </div>
                   <p class="skills-proof-card__ability">반복 조회와 계층형 조회를 배치 조회·집계 쿼리·메모리 트리 방식으로 개선했습니다.</p>
-                  <p class="skills-proof-card__proof"><strong>대표 사례</strong> · Loggy<span>회의 20건 기준 최대 40회 반복 조회 → 집계 1회 + IN 조회 1회</span></p>
+                  <p class="skills-proof-card__proof">
+                    <a class="skills-proof-card__project-link" href="/loggy.html"><strong>대표 프로젝트</strong> · Loggy <span class="skills-proof-card__project-arrow" aria-hidden="true">↗</span></a>
+                    <span class="skills-proof-card__proof-detail">회의 20건 조회 시 참여자 수·생성자 정보에서 발생할 수 있던 최대 40회의 반복 조회를 집계 1회와 IN 조회 1회로 줄였습니다.</span>
+                  </p>
                 </article>
 
                 <article class="skills-proof-card skills-proof-card--realtime">
@@ -335,7 +363,10 @@
                     <span class="skills-proof-card__tag">PostgreSQL</span>
                   </div>
                   <p class="skills-proof-card__ability">휘발성 데이터와 영구 데이터를 분리하고, 실시간 전송·병합 조회·종료 후 정리 흐름을 구현했습니다.</p>
-                  <p class="skills-proof-card__proof"><strong>대표 사례</strong> · Loggy<span>Redis 일반 채팅 + DB 커밋 병합 조회, 종료 시 Redis 데이터 정리</span></p>
+                  <p class="skills-proof-card__proof">
+                    <a class="skills-proof-card__project-link" href="/loggy.html"><strong>대표 프로젝트</strong> · Loggy <span class="skills-proof-card__project-arrow" aria-hidden="true">↗</span></a>
+                    <span class="skills-proof-card__proof-detail">Redis의 일반 채팅과 DB의 커밋을 단일 타임라인으로 병합하고, 회의·안건·브랜치 종료 시 휘발 데이터를 정리했습니다.</span>
+                  </p>
                 </article>
 
                 <article class="skills-proof-card skills-proof-card--ai">
@@ -351,8 +382,11 @@
                     <span class="skills-proof-card__tag">Gemini API</span>
                     <span class="skills-proof-card__tag">CompletableFuture</span>
                   </div>
-                  <p class="skills-proof-card__ability">긴 AI 작업을 초기 응답과 백그라운드 작업으로 분리하고, 결과 편차와 실패를 보정·fallback으로 처리했습니다.</p>
-                  <p class="skills-proof-card__proof"><strong>대표 사례</strong> · AvoFit<span>첫 7일 약 15초대 우선 응답 · 나머지 23일 비동기 생성</span></p>
+                  <p class="skills-proof-card__ability">긴 AI 생성 작업을 초기 응답과 백그라운드 작업으로 분리하고, 목표 칼로리 범위 이탈은 재계산하며 생성 실패는 fallback으로 복원했습니다.</p>
+                  <p class="skills-proof-card__proof">
+                    <a class="skills-proof-card__project-link" href="/avofit.html"><strong>대표 프로젝트</strong> · AvoFit <span class="skills-proof-card__project-arrow" aria-hidden="true">↗</span></a>
+                    <span class="skills-proof-card__proof-detail">첫 7일 식단을 약 15초대에 우선 제공하고, 나머지 23일은 백그라운드에서 비동기로 생성했습니다.</span>
+                  </p>
                 </article>
               </div>
               <div class="skills-proof-supporting">
@@ -364,7 +398,7 @@
                 <article class="skills-proof-supporting__item">
                   <h3>Verification</h3>
                   <p class="skills-proof-supporting__tags">JUnit 5 · Mockito · MockMvc · AssertJ</p>
-                  <p class="skills-proof-supporting__description">상태 전이, 권한, 부분 실패와 재시도 시나리오의 회귀 검증에 활용했습니다.</p>
+                  <p class="skills-proof-supporting__description">상태 전이, 권한, 중복 요청, 부분 실패와 재시도 시나리오의 회귀 검증에 활용했습니다.</p>
                 </article>
               </div>
             </div>`;
