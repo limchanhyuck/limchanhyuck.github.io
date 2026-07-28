@@ -61,10 +61,137 @@
         line-height: 1.75;
         word-break: keep-all;
       }
+      .skills-proof-section {
+        padding: 96px 16px;
+        background: #111827;
+        color: #e2e8f0;
+      }
+      .skills-proof-section__inner {
+        width: min(1024px, 100%);
+        margin: 0 auto;
+      }
+      .skills-proof-section__title {
+        margin: 0 0 48px;
+        text-align: center;
+        font-size: clamp(2.5rem, 6vw, 4rem);
+        font-weight: 800;
+        letter-spacing: -0.04em;
+      }
+      .skills-proof-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 18px;
+      }
+      .skills-proof-card {
+        --skill-accent: #38bdf8;
+        --skill-accent-rgb: 56, 189, 248;
+        min-width: 0;
+        padding: 26px;
+        border: 1px solid rgba(var(--skill-accent-rgb), 0.24);
+        border-radius: 20px;
+        background: rgba(var(--skill-accent-rgb), 0.045);
+        box-shadow: 0 16px 42px rgba(2, 8, 23, 0.2);
+      }
+      .skills-proof-card--backend {
+        --skill-accent: #fb923c;
+        --skill-accent-rgb: 251, 146, 60;
+      }
+      .skills-proof-card--data {
+        --skill-accent: #a78bfa;
+        --skill-accent-rgb: 167, 139, 250;
+      }
+      .skills-proof-card--realtime {
+        --skill-accent: #22d3ee;
+        --skill-accent-rgb: 34, 211, 238;
+      }
+      .skills-proof-card--ai {
+        --skill-accent: #34d399;
+        --skill-accent-rgb: 52, 211, 153;
+      }
+      .skills-proof-card__header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .skills-proof-card__icon {
+        display: grid;
+        width: 38px;
+        height: 38px;
+        flex: 0 0 38px;
+        place-items: center;
+        border: 1px solid rgba(var(--skill-accent-rgb), 0.24);
+        border-radius: 11px;
+        background: rgba(var(--skill-accent-rgb), 0.1);
+        color: var(--skill-accent);
+      }
+      .skills-proof-card__icon svg {
+        width: 20px;
+        height: 20px;
+        fill: none;
+        stroke: currentColor;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        stroke-width: 1.8;
+      }
+      .skills-proof-card h3 {
+        margin: 0;
+        color: #f8fafc;
+        font-size: 1.15rem;
+        font-weight: 750;
+      }
+      .skills-proof-card__level {
+        display: inline-flex;
+        margin-top: 18px;
+        padding: 5px 9px;
+        border: 1px solid rgba(var(--skill-accent-rgb), 0.25);
+        border-radius: 999px;
+        background: rgba(var(--skill-accent-rgb), 0.08);
+        color: var(--skill-accent);
+        font-size: 0.72rem;
+        font-weight: 700;
+      }
+      .skills-proof-card__tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 7px;
+        margin-top: 16px;
+      }
+      .skills-proof-card__tag {
+        padding: 5px 8px;
+        border: 1px solid rgba(148, 163, 184, 0.16);
+        border-radius: 7px;
+        background: rgba(30, 41, 59, 0.72);
+        color: #cbd5e1;
+        font-family: "Fira Code", monospace;
+        font-size: 0.72rem;
+      }
+      .skills-proof-card__ability {
+        margin: 18px 0 0;
+        color: #e2e8f0;
+        font-size: 0.95rem;
+        line-height: 1.7;
+        word-break: keep-all;
+      }
+      .skills-proof-card__proof {
+        margin: 15px 0 0;
+        padding-top: 14px;
+        border-top: 1px solid rgba(148, 163, 184, 0.13);
+        color: #94a3b8;
+        font-size: 0.82rem;
+        line-height: 1.55;
+      }
+      .skills-proof-card__proof strong {
+        color: var(--skill-accent);
+        font-weight: 700;
+      }
       @media (max-width: 720px) {
         .project-summary-list { width: min(100% - 32px, 1120px); margin-bottom: 40px; }
         .project-summary-list__grid { grid-template-columns: 1fr; }
         .project-summary-card { padding: 22px; }
+        .skills-proof-section { padding: 72px 16px; }
+        .skills-proof-section__title { margin-bottom: 32px; }
+        .skills-proof-grid { grid-template-columns: 1fr; }
+        .skills-proof-card { padding: 22px; }
       }
     </style>
   </head>
@@ -72,6 +199,100 @@
     <div id="root"></div>
     <script>
       window.addEventListener('load', function () {
+        function mountSkillsProof() {
+          var original = document.querySelector(
+            'section[data-original-skills="true"], section#skills:not(.skills-proof-section)'
+          );
+          if (!original) return;
+
+          original.dataset.originalSkills = 'true';
+          original.id = 'skills-original';
+          original.style.display = 'none';
+          if (document.getElementById('skills-proof-content')) return;
+
+          var section = document.createElement('section');
+          section.id = 'skills';
+          section.className = 'skills-proof-section';
+          section.setAttribute('aria-labelledby', 'skills-proof-title');
+          section.innerHTML = `
+            <div id="skills-proof-content" class="skills-proof-section__inner">
+              <h2 id="skills-proof-title" class="skills-proof-section__title">Skills</h2>
+              <div class="skills-proof-grid">
+                <article class="skills-proof-card skills-proof-card--backend">
+                  <div class="skills-proof-card__header">
+                    <span class="skills-proof-card__icon" aria-hidden="true">
+                      <svg viewBox="0 0 24 24"><path d="m8 9-4 3 4 3M16 9l4 3-4 3M14 5l-4 14"/></svg>
+                    </span>
+                    <h3>Backend &amp; Transaction</h3>
+                  </div>
+                  <span class="skills-proof-card__level">직접 설계·구현</span>
+                  <div class="skills-proof-card__tags">
+                    <span class="skills-proof-card__tag">Java</span>
+                    <span class="skills-proof-card__tag">Spring Boot</span>
+                    <span class="skills-proof-card__tag">JPA</span>
+                    <span class="skills-proof-card__tag">MySQL</span>
+                  </div>
+                  <p class="skills-proof-card__ability">트랜잭션 경계와 실패 흐름을 설계할 수 있음</p>
+                  <p class="skills-proof-card__proof"><strong>Proof</strong> · DuckChi 부분 성공 정산</p>
+                </article>
+
+                <article class="skills-proof-card skills-proof-card--data">
+                  <div class="skills-proof-card__header">
+                    <span class="skills-proof-card__icon" aria-hidden="true">
+                      <svg viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="7" ry="3"/><path d="M5 5v6c0 1.7 3.1 3 7 3s7-1.3 7-3V5M5 11v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6"/></svg>
+                    </span>
+                    <h3>Data Access &amp; Performance</h3>
+                  </div>
+                  <span class="skills-proof-card__level">프로젝트 적용·개선</span>
+                  <div class="skills-proof-card__tags">
+                    <span class="skills-proof-card__tag">PostgreSQL</span>
+                    <span class="skills-proof-card__tag">MySQL</span>
+                    <span class="skills-proof-card__tag">JPA</span>
+                    <span class="skills-proof-card__tag">SQL</span>
+                  </div>
+                  <p class="skills-proof-card__ability">반복 조회와 계층형 조회를 개선할 수 있음</p>
+                  <p class="skills-proof-card__proof"><strong>Proof</strong> · Loggy 최대 40회 → 2회</p>
+                </article>
+
+                <article class="skills-proof-card skills-proof-card--realtime">
+                  <div class="skills-proof-card__header">
+                    <span class="skills-proof-card__icon" aria-hidden="true">
+                      <svg viewBox="0 0 24 24"><path d="M8.5 15.5a5 5 0 0 1 0-7M15.5 8.5a5 5 0 0 1 0 7M5.5 18.5a9 9 0 0 1 0-13M18.5 5.5a9 9 0 0 1 0 13"/><circle cx="12" cy="12" r="1.5"/></svg>
+                    </span>
+                    <h3>Realtime &amp; Messaging</h3>
+                  </div>
+                  <span class="skills-proof-card__level">직접 설계·구현</span>
+                  <div class="skills-proof-card__tags">
+                    <span class="skills-proof-card__tag">WebSocket</span>
+                    <span class="skills-proof-card__tag">STOMP</span>
+                    <span class="skills-proof-card__tag">Redis</span>
+                  </div>
+                  <p class="skills-proof-card__ability">실시간 알림과 임시·영구 메시지 흐름을 분리해 설계할 수 있음</p>
+                  <p class="skills-proof-card__proof"><strong>Proof</strong> · Loggy 알림·Redis/DB 단일 타임라인</p>
+                </article>
+
+                <article class="skills-proof-card skills-proof-card--ai">
+                  <div class="skills-proof-card__header">
+                    <span class="skills-proof-card__icon" aria-hidden="true">
+                      <svg viewBox="0 0 24 24"><path d="m12 3 1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3ZM19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8L19 15Z"/></svg>
+                    </span>
+                    <h3>AI Integration &amp; Resilience</h3>
+                  </div>
+                  <span class="skills-proof-card__level">프로젝트 적용·개선</span>
+                  <div class="skills-proof-card__tags">
+                    <span class="skills-proof-card__tag">Spring Boot</span>
+                    <span class="skills-proof-card__tag">MyBatis</span>
+                    <span class="skills-proof-card__tag">Gemini</span>
+                    <span class="skills-proof-card__tag">Async</span>
+                  </div>
+                  <p class="skills-proof-card__ability">AI 응답 지연과 형식 편차를 비동기·보정·fallback으로 흡수할 수 있음</p>
+                  <p class="skills-proof-card__proof"><strong>Proof</strong> · AvoFit 7일 선응답·23일 비동기 생성</p>
+                </article>
+              </div>
+            </div>`;
+          original.parentNode.insertBefore(section, original);
+        }
+
         function mountProjectSummary() {
           var projects = document.getElementById('projects');
           if (!projects || document.getElementById('project-summary-list')) return;
@@ -120,10 +341,15 @@
           projects.parentNode.insertBefore(summary, projects);
         }
 
-        mountProjectSummary();
+        function mountPortfolioEnhancements() {
+          mountSkillsProof();
+          mountProjectSummary();
+        }
+
+        mountPortfolioEnhancements();
         var root = document.getElementById('root');
         if (root) {
-          new MutationObserver(mountProjectSummary).observe(root, {
+          new MutationObserver(mountPortfolioEnhancements).observe(root, {
             childList: true,
             subtree: true,
           });
