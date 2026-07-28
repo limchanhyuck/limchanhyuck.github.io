@@ -71,11 +71,33 @@
         margin: 0 auto;
       }
       .skills-proof-section__title {
-        margin: 0 0 48px;
+        margin: 0 0 12px;
         text-align: center;
         font-size: clamp(2.5rem, 6vw, 4rem);
         font-weight: 800;
         letter-spacing: -0.04em;
+      }
+      .skills-proof-section__description {
+        margin: 0 auto;
+        color: #94a3b8;
+        text-align: center;
+        font-size: 0.98rem;
+        line-height: 1.7;
+        word-break: keep-all;
+      }
+      .skills-proof-section__legend {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 8px 18px;
+        margin: 18px auto 40px;
+        color: #64748b;
+        font-size: 0.76rem;
+        line-height: 1.6;
+      }
+      .skills-proof-section__legend strong {
+        color: #94a3b8;
+        font-weight: 700;
       }
       .skills-proof-grid {
         display: grid;
@@ -178,20 +200,59 @@
         border-top: 1px solid rgba(148, 163, 184, 0.13);
         color: #94a3b8;
         font-size: 0.82rem;
-        line-height: 1.55;
+        line-height: 1.65;
+        word-break: keep-all;
       }
       .skills-proof-card__proof strong {
         color: var(--skill-accent);
         font-weight: 700;
+      }
+      .skills-proof-card__proof span {
+        display: block;
+        margin-top: 4px;
+        color: #cbd5e1;
+      }
+      .skills-proof-supporting {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+        margin-top: 18px;
+      }
+      .skills-proof-supporting__item {
+        min-width: 0;
+        padding: 18px 20px;
+        border: 1px solid rgba(148, 163, 184, 0.14);
+        border-radius: 14px;
+        background: rgba(15, 23, 42, 0.55);
+      }
+      .skills-proof-supporting__item h3 {
+        margin: 0;
+        color: #e2e8f0;
+        font-size: 0.92rem;
+      }
+      .skills-proof-supporting__tags {
+        margin: 8px 0 0;
+        color: #38bdf8;
+        font-family: "Fira Code", monospace;
+        font-size: 0.75rem;
+        line-height: 1.6;
+      }
+      .skills-proof-supporting__description {
+        margin: 8px 0 0;
+        color: #94a3b8;
+        font-size: 0.8rem;
+        line-height: 1.6;
+        word-break: keep-all;
       }
       @media (max-width: 720px) {
         .project-summary-list { width: min(100% - 32px, 1120px); margin-bottom: 40px; }
         .project-summary-list__grid { grid-template-columns: 1fr; }
         .project-summary-card { padding: 22px; }
         .skills-proof-section { padding: 72px 16px; }
-        .skills-proof-section__title { margin-bottom: 32px; }
+        .skills-proof-section__legend { justify-content: flex-start; margin-bottom: 28px; }
         .skills-proof-grid { grid-template-columns: 1fr; }
         .skills-proof-card { padding: 22px; }
+        .skills-proof-supporting { grid-template-columns: 1fr; }
       }
     </style>
   </head>
@@ -216,7 +277,12 @@
           section.setAttribute('aria-labelledby', 'skills-proof-title');
           section.innerHTML = `
             <div id="skills-proof-content" class="skills-proof-section__inner">
-              <h2 id="skills-proof-title" class="skills-proof-section__title">Skills</h2>
+              <h2 id="skills-proof-title" class="skills-proof-section__title">Skills in Practice</h2>
+              <p class="skills-proof-section__description">프로젝트에서 직접 설계·구현·개선한 범위를 대표 사례와 함께 정리했습니다.</p>
+              <div class="skills-proof-section__legend" aria-label="숙련도 배지 기준">
+                <span><strong>직접 설계·구현</strong>: 요구사항 분석부터 구조 설계와 구현까지 주도</span>
+                <span><strong>프로젝트 적용·개선</strong>: 기존 구조에 기술을 적용하고 문제를 개선</span>
+              </div>
               <div class="skills-proof-grid">
                 <article class="skills-proof-card skills-proof-card--backend">
                   <div class="skills-proof-card__header">
@@ -230,10 +296,10 @@
                     <span class="skills-proof-card__tag">Java</span>
                     <span class="skills-proof-card__tag">Spring Boot</span>
                     <span class="skills-proof-card__tag">JPA</span>
-                    <span class="skills-proof-card__tag">MySQL</span>
+                    <span class="skills-proof-card__tag">OpenFeign</span>
                   </div>
-                  <p class="skills-proof-card__ability">트랜잭션 경계와 실패 흐름을 설계할 수 있음</p>
-                  <p class="skills-proof-card__proof"><strong>Proof</strong> · DuckChi 부분 성공 정산</p>
+                  <p class="skills-proof-card__ability">트랜잭션 경계와 상태 전이를 설계하고, 중복 요청·부분 실패·재시도 흐름을 서버 규칙으로 제어했습니다.</p>
+                  <p class="skills-proof-card__proof"><strong>대표 사례</strong> · DuckChi<span>5건 중 1건 실패 시 성공 4건 보존, 실패 1건만 재처리</span></p>
                 </article>
 
                 <article class="skills-proof-card skills-proof-card--data">
@@ -250,8 +316,8 @@
                     <span class="skills-proof-card__tag">JPA</span>
                     <span class="skills-proof-card__tag">SQL</span>
                   </div>
-                  <p class="skills-proof-card__ability">반복 조회와 계층형 조회를 개선할 수 있음</p>
-                  <p class="skills-proof-card__proof"><strong>Proof</strong> · Loggy 최대 40회 → 2회</p>
+                  <p class="skills-proof-card__ability">반복 조회와 계층형 조회를 배치 조회·집계 쿼리·메모리 트리 방식으로 개선했습니다.</p>
+                  <p class="skills-proof-card__proof"><strong>대표 사례</strong> · Loggy<span>회의 20건 기준 최대 40회 반복 조회 → 집계 1회 + IN 조회 1회</span></p>
                 </article>
 
                 <article class="skills-proof-card skills-proof-card--realtime">
@@ -259,16 +325,17 @@
                     <span class="skills-proof-card__icon" aria-hidden="true">
                       <svg viewBox="0 0 24 24"><path d="M8.5 15.5a5 5 0 0 1 0-7M15.5 8.5a5 5 0 0 1 0 7M5.5 18.5a9 9 0 0 1 0-13M18.5 5.5a9 9 0 0 1 0 13"/><circle cx="12" cy="12" r="1.5"/></svg>
                     </span>
-                    <h3>Realtime &amp; Messaging</h3>
+                    <h3>Realtime &amp; Data Lifecycle</h3>
                   </div>
-                  <span class="skills-proof-card__level">직접 설계·구현</span>
+                  <span class="skills-proof-card__level">프로젝트 적용·개선</span>
                   <div class="skills-proof-card__tags">
+                    <span class="skills-proof-card__tag">Redis</span>
                     <span class="skills-proof-card__tag">WebSocket</span>
                     <span class="skills-proof-card__tag">STOMP</span>
-                    <span class="skills-proof-card__tag">Redis</span>
+                    <span class="skills-proof-card__tag">PostgreSQL</span>
                   </div>
-                  <p class="skills-proof-card__ability">실시간 알림과 임시·영구 메시지 흐름을 분리해 설계할 수 있음</p>
-                  <p class="skills-proof-card__proof"><strong>Proof</strong> · Loggy 알림·Redis/DB 단일 타임라인</p>
+                  <p class="skills-proof-card__ability">휘발성 데이터와 영구 데이터를 분리하고, 실시간 전송·병합 조회·종료 후 정리 흐름을 구현했습니다.</p>
+                  <p class="skills-proof-card__proof"><strong>대표 사례</strong> · Loggy<span>Redis 일반 채팅 + DB 커밋 병합 조회, 종료 시 Redis 데이터 정리</span></p>
                 </article>
 
                 <article class="skills-proof-card skills-proof-card--ai">
@@ -276,17 +343,28 @@
                     <span class="skills-proof-card__icon" aria-hidden="true">
                       <svg viewBox="0 0 24 24"><path d="m12 3 1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3ZM19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8L19 15Z"/></svg>
                     </span>
-                    <h3>AI Integration &amp; Resilience</h3>
+                    <h3>AI Integration &amp; Async Processing</h3>
                   </div>
                   <span class="skills-proof-card__level">프로젝트 적용·개선</span>
                   <div class="skills-proof-card__tags">
                     <span class="skills-proof-card__tag">Spring Boot</span>
-                    <span class="skills-proof-card__tag">MyBatis</span>
-                    <span class="skills-proof-card__tag">Gemini</span>
-                    <span class="skills-proof-card__tag">Async</span>
+                    <span class="skills-proof-card__tag">Gemini API</span>
+                    <span class="skills-proof-card__tag">CompletableFuture</span>
                   </div>
-                  <p class="skills-proof-card__ability">AI 응답 지연과 형식 편차를 비동기·보정·fallback으로 흡수할 수 있음</p>
-                  <p class="skills-proof-card__proof"><strong>Proof</strong> · AvoFit 7일 선응답·23일 비동기 생성</p>
+                  <p class="skills-proof-card__ability">긴 AI 작업을 초기 응답과 백그라운드 작업으로 분리하고, 결과 편차와 실패를 보정·fallback으로 처리했습니다.</p>
+                  <p class="skills-proof-card__proof"><strong>대표 사례</strong> · AvoFit<span>첫 7일 약 15초대 우선 응답 · 나머지 23일 비동기 생성</span></p>
+                </article>
+              </div>
+              <div class="skills-proof-supporting">
+                <article class="skills-proof-supporting__item">
+                  <h3>Supporting Tools</h3>
+                  <p class="skills-proof-supporting__tags">MyBatis · QueryDSL · Docker · Linux · Python</p>
+                  <p class="skills-proof-supporting__description">프로젝트 기능 구현, SQL 작성 및 로컬 개발환경 구성과 문제 해결에 활용했습니다.</p>
+                </article>
+                <article class="skills-proof-supporting__item">
+                  <h3>Verification</h3>
+                  <p class="skills-proof-supporting__tags">JUnit 5 · Mockito · MockMvc · AssertJ</p>
+                  <p class="skills-proof-supporting__description">상태 전이, 권한, 부분 실패와 재시도 시나리오의 회귀 검증에 활용했습니다.</p>
                 </article>
               </div>
             </div>`;
